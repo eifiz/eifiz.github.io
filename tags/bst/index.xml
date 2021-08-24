@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>BST on Eifiz Blog</title>
+    <link>https://example.com/tags/bst/</link>
+    <description>Recent content in BST on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 18 Mar 2018 16:40:54 +0000</lastBuildDate><atom:link href="https://example.com/tags/bst/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>红黑树</title>
+      <link>https://example.com/p/red-black-tree/</link>
+      <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
+      
+      <guid>https://example.com/p/red-black-tree/</guid>
+      <description>CLRS红黑树章节阅读心得
+什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
+在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
+红黑树的结点比BST的结点多出一个color属性，其值可能为red或black。红黑树有以下性质：
+ 每个结点的颜色非红即黑 根结点的颜色是黑的 叶子(NIL)的颜色是黑的 如果一个结点的颜色是红的，那么他的子结点一定是黑的 对于每个结点，所有从它出发到叶子的简单路径包含相同数量的黑色结点  我们把一个结点的简单路径上除其本身之外包含的黑色结点数量叫做black-height(黑高)。
+由于
+ 引理13.1：具有n个结点的红黑树的高最多为2lg(n+1)
+ 我们可以知道，动态操作Search、Minimum、Maximum、Successor和Predecessor在红黑树中花费是时间是O(lgn)。 下面为了便于处理红黑树代码的边界条件，使用一个哨兵T.nil来代替NULL。T.nil跟其他结点有相同属性，但除color为黑以外其他属性不重要。
+证明引理13.1 证明：我们先证明以任一结点x为根的子树至少包含$2^{bh(x)}-1$个内部结点。通过数学归纳法来证。
+如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。 对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)+(2^{bh(x)-1}-1)+1=2^{bh(x)}-1$个内部结点，证明完毕。
+然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n+1)≥h/2$，也就是$h≤2lg(n+1)$ 证明完毕。
+旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.</description>
+    </item>
+    
+  </channel>
+</rss>

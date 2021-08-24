@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>XSS on Eifiz Blog</title>
+    <link>https://example.com/tags/xss/</link>
+    <description>Recent content in XSS on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/tags/xss/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>探索DOM XSS一个trick的原理</title>
+      <link>https://example.com/p/a-trick-in-dom-xss/</link>
+      <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/p/a-trick-in-dom-xss/</guid>
+      <description>文章首发于安全客： https://www.anquanke.com/post/id/250538
+ 前段时间P牛在他的星球发了一个XSS的小挑战（关于挑战的更多细节和解法见P牛的博客或者星球），我用的是DOM clobbering的方式完成。事后P牛给出了另一个trick，我看不懂但大受震撼，所以本文就来探讨一下这个trick的原理。
+以下测试的步骤都是Win10 &amp;amp; Chrome 最新版(92.0.4515.131) 下进行的；作者水平有限，如有错漏，还请各位师傅指正。
+挑战 小挑战的代码如下
+&amp;lt;script&amp;gt; const data = decodeURIComponent(location.hash.substr(1));; const root = document.createElement(&amp;#39;div&amp;#39;); root.innerHTML = data; // 这里模拟了XSS过滤的过程，方法是移除所有属性，sanitizer  for (let el of root.querySelectorAll(&amp;#39;*&amp;#39;)) { let attrs = []; for (let attr of el.attributes) { attrs.push(attr.name); } for (let name of attrs) { el.removeAttribute(name); } }	document.body.appendChild(root); &amp;lt;/script&amp;gt; 可以看到这是个明显的DOM XSS，用户的输入会构成一个新div元素的子结点，但在插入body之前会被移除所有的属性。
+解法 这里有两种解法，一种是绕过过滤的代码，另一种则是在过滤前就执行的代码
+失败解法 有一些常见的payload在这个挑战里是无法成功，例如&amp;lt;img src=x onerror=alert(1)&amp;gt;，原因也很明显，onerror在触发前被过滤掉了。
+绕过过滤 绕过过滤主要是为了使得Payload里面的属性不被清除，最终触发事件执行JS。具体做法正是DOM clobbering，但不是本文重点就不展开了，感兴趣的师傅可以看下Zedd师傅的文章，P牛的文章也有其他Payload，这里给出一个我的解法以供参考：
+&amp;lt;form tabindex=1 onfocus=&amp;#34;alert(1);this.</description>
+    </item>
+    
+  </channel>
+</rss>

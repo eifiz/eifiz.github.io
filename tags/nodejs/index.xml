@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Nodejs on Eifiz Blog</title>
+    <link>https://example.com/tags/nodejs/</link>
+    <description>Recent content in Nodejs on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 30 Aug 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/tags/nodejs/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
+      <link>https://example.com/p/xnuca2019-hardjs-writeup/</link>
+      <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/p/xnuca2019-hardjs-writeup/</guid>
+      <description>文章首发于先知社区：https://xz.aliyun.com/t/6113
+ 前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
+初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。
+先分析server.js。
+可以发现这个服务器是nodejs，并且用了express这个框架，模板渲染引擎则用了ejs。
+审计一下代码可以看到有以下的路由：
+ / 首页 /static 静态文件 /sandbox 显示用户HTML数据用的沙盒 /login 登陆 /register 注册 /get json接口 获取数据库中保存的数据 /add 用户添加数据的接口  除了/static，/login和/register以外，所以路由在访问的时候都会经过一个auth函数进行身份验证
+因为做了转义处理，所以应该是没有Sql注入的问题，需要从其他方面下手。
+另外在初始化的时候有这么一句
+app.use(bodyParser.urlencoded({extended: true})).use(bodyParser.json()) 所以我们可以通过json格式传递参数到服务端
+发现问题 在/get中我们可以发现，查询出来的结果，如果超过5条，那么会被合并成一条。具体的过程是，先通过sql查询出来当前用户所有的数据，然后一条条合并到一起，关键代码如下
+var sql = &amp;#34;select `id`,`dom` from `html` where userid=? &amp;#34;; var raws = await query(sql,[userid]); var doms = {} var ret = new Array(); for(var i=0;i&amp;lt;raws.length ;i++){ lodash.defaultsDeep(doms,JSON.parse( raws[i].dom )); var sql = &amp;#34;delete from `html` where id = ?</description>
+    </item>
+    
+  </channel>
+</rss>

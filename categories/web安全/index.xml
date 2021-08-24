@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Web安全 on Eifiz Blog</title>
+    <link>https://example.com/categories/web%E5%AE%89%E5%85%A8/</link>
+    <description>Recent content in Web安全 on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/categories/web%E5%AE%89%E5%85%A8/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>探索DOM XSS一个trick的原理</title>
+      <link>https://example.com/p/a-trick-in-dom-xss/</link>
+      <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/p/a-trick-in-dom-xss/</guid>
+      <description>文章首发于安全客： https://www.anquanke.com/post/id/250538
+ 前段时间P牛在他的星球发了一个XSS的小挑战（关于挑战的更多细节和解法见P牛的博客或者星球），我用的是DOM clobbering的方式完成。事后P牛给出了另一个trick，我看不懂但大受震撼，所以本文就来探讨一下这个trick的原理。
+以下测试的步骤都是Win10 &amp;amp; Chrome 最新版(92.0.4515.131) 下进行的；作者水平有限，如有错漏，还请各位师傅指正。
+挑战 小挑战的代码如下
+&amp;lt;script&amp;gt; const data = decodeURIComponent(location.hash.substr(1));; const root = document.createElement(&amp;#39;div&amp;#39;); root.innerHTML = data; // 这里模拟了XSS过滤的过程，方法是移除所有属性，sanitizer  for (let el of root.querySelectorAll(&amp;#39;*&amp;#39;)) { let attrs = []; for (let attr of el.attributes) { attrs.push(attr.name); } for (let name of attrs) { el.removeAttribute(name); } }	document.body.appendChild(root); &amp;lt;/script&amp;gt; 可以看到这是个明显的DOM XSS，用户的输入会构成一个新div元素的子结点，但在插入body之前会被移除所有的属性。
+解法 这里有两种解法，一种是绕过过滤的代码，另一种则是在过滤前就执行的代码
+失败解法 有一些常见的payload在这个挑战里是无法成功，例如&amp;lt;img src=x onerror=alert(1)&amp;gt;，原因也很明显，onerror在触发前被过滤掉了。
+绕过过滤 绕过过滤主要是为了使得Payload里面的属性不被清除，最终触发事件执行JS。具体做法正是DOM clobbering，但不是本文重点就不展开了，感兴趣的师傅可以看下Zedd师傅的文章，P牛的文章也有其他Payload，这里给出一个我的解法以供参考：
+&amp;lt;form tabindex=1 onfocus=&amp;#34;alert(1);this.</description>
+    </item>
+    
+    <item>
+      <title>*ctf2021 oh-my-socket 复现</title>
+      <link>https://example.com/p/starctf2021-oh-my-socket/</link>
+      <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
+      
+      <guid>https://example.com/p/starctf2021-oh-my-socket/</guid>
+      <description>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
+审计题目 主办方公开了题目源码以及相关WP在他们的github上面
+https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
+可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：
+ webserver上的root权限RCE client里的任意文件读取  在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送*ctf即可得到server的flag。
+所以问题就是断开client和server的链接。
+因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。
+所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。
+而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可
+预期解 Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件/proc/net/netstat或者其他的文件如proc/self/net/netstat读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。
+因此，采用二分法找出预期序列号即可进行后续攻击。
+另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&amp;gt;seq2，而是
+/* * The next routines deal with comparing 32 bit unsigned ints * and worry about wraparound (automatic with unsigned arithmetic). */ static inline int before(__u32 seq1, __u32 seq2) { return (__s32)(seq1-seq2) &amp;lt; 0; } #define after(seq2, seq1) before(seq1, seq2) 如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。
+这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31+x 小于 y (y &amp;lt; x &amp;lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，</description>
+    </item>
+    
+    <item>
+      <title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
+      <link>https://example.com/p/xnuca2019-hardjs-writeup/</link>
+      <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/p/xnuca2019-hardjs-writeup/</guid>
+      <description>文章首发于先知社区：https://xz.aliyun.com/t/6113
+ 前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
+初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。
+先分析server.js。
+可以发现这个服务器是nodejs，并且用了express这个框架，模板渲染引擎则用了ejs。
+审计一下代码可以看到有以下的路由：
+ / 首页 /static 静态文件 /sandbox 显示用户HTML数据用的沙盒 /login 登陆 /register 注册 /get json接口 获取数据库中保存的数据 /add 用户添加数据的接口  除了/static，/login和/register以外，所以路由在访问的时候都会经过一个auth函数进行身份验证
+因为做了转义处理，所以应该是没有Sql注入的问题，需要从其他方面下手。
+另外在初始化的时候有这么一句
+app.use(bodyParser.urlencoded({extended: true})).use(bodyParser.json()) 所以我们可以通过json格式传递参数到服务端
+发现问题 在/get中我们可以发现，查询出来的结果，如果超过5条，那么会被合并成一条。具体的过程是，先通过sql查询出来当前用户所有的数据，然后一条条合并到一起，关键代码如下
+var sql = &amp;#34;select `id`,`dom` from `html` where userid=? &amp;#34;; var raws = await query(sql,[userid]); var doms = {} var ret = new Array(); for(var i=0;i&amp;lt;raws.length ;i++){ lodash.defaultsDeep(doms,JSON.parse( raws[i].dom )); var sql = &amp;#34;delete from `html` where id = ?</description>
+    </item>
+    
+  </channel>
+</rss>

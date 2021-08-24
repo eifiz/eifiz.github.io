@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>学习笔记 on Eifiz Blog</title>
+    <link>https://example.com/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</link>
+    <description>Recent content in 学习笔记 on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 16 Dec 2018 23:32:43 +0000</lastBuildDate><atom:link href="https://example.com/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CSAPP十二章阅读笔记</title>
+      <link>https://example.com/p/csapp-chapter-12/</link>
+      <pubDate>Sun, 16 Dec 2018 23:32:43 +0000</pubDate>
+      
+      <guid>https://example.com/p/csapp-chapter-12/</guid>
+      <description>本文为CSAPP第十二章的阅读笔记，参照的是英文书，专业名词翻译可能不准确，配合原书食用更佳。
+12.0 并发就是逻辑流上的同时发生，运行。在计算机系统的不同层面上都有所体现。并发是系统内核运行多个应用程序的一种机制，当然也不只限于内核。
+应用层级的并发有以下例子：
+ 访问缓慢的I/O设备 与人类互动 通过推迟操作来减低等待时间 服务多个网络客户端 在多核机器上进行并行计算  使用应用层级并发技术的程序叫并发程序。操作系统提供3种基本方法来编写并发程序：
+ 进程 I/O复用 线程  12.1 通过进程实现 最简单的实现并发的方式就是通过多进程，具体是利用fork, exec 和waitpid等相关函数。
+书上在这里给了一个服务器程序作为例子。首先假设有2个客户端和1个服务端，服务端监听一个listening descriptor (假设是3)。然后假设，从客户端收到一个链接请求，返回了一个connected descriptor (假设是4)。接着服务器fork出一个子进程，子进程关闭自己的listening descriptor 3，父进程关闭connected descriptor 4，然后子进程开始响应客户端的请求，父进程继续监听。因为子进程和父进程都指向相同的文件表入口(file table entry)，所以如果父进程不关闭connected descriptor 4，那就会导致内存泄露，消耗有效内存导致系统崩溃。在这之后如果客户端2向listening descriptor 3发起请求，那么就返回connected descriptor 5并重复以上过程。
+考虑到服务器一般都是长时间运行，所以在976页的代码中4到9行包含了一个SIGCHLD处理器来捕获僵尸子进程。因为SIGCHLD处理器执行的时候SIGCHLD信号是被阻塞的，Linux的信号处理又不是队列的，所以需要这个SIGCHLD处理器去捕获多个僵尸子进程。
+ 这种实现方式有个很明确的特点，文件表是共享的但用户地址空间不是。所以一个进程是不可能意外访问到其他进程的虚拟内存，这也保证不会有很多奇怪的错误。如果进程要共享信息那就需要使用IPC机制，但是这就会导致速度变慢。
+12.2 通过I/O复用实现 现在假设我们有一个服务器程序既要响应客户端网络请求，又要响应用户(管理员)的输入。那么不管我们先监听哪个事件都不怎么好，所以我们需要I/O复用这种技术来同时监听多个事件。基本思想就是使用select函数去要求内核挂起进程，在一个或更多个I/O事件发生后返回控制权给应用程序。
+int select(int n, fd_set *fdset, NULL, NULL, NULL); 我们只关注select函数的前2个参数，第二个参数类型为fd_set，表示一个descriptors集合，实际上就是一个n长度的bit向量*$b_{n-1},&amp;hellip;.,b_1,b_0$*。 每个$b_k$都对应响应一个descriptor k。如果$b_k$是1，那么这个descriptor k就是fd_set的有效成员。除了声明和赋值以外，你只能用FD_ZERO等宏来操作fd_set。第一个参数一般是descriptors集合的最大基数。 返回值是ready descriptors的个数，如果出错就返回-1。
+当一个向descriptor k读1 byte的请求不会被阻塞的时候，这个descriptor就是ready的。我们向select传入fdset后，执行fdset的指针会被指向fdset的一个子集 ready set。所以我们每次都要更新传入select的fdset的指针。
+书上给出的示例代码先声明了一个read_set，然后把stdin和服务器监听的listenfd添加到read_set，然后开始死循环。每次循环先把read_set的值赋予ready_set，调用select并传入ready_set。在select后面添加判断代码，依次判断是否有来自用户的输入或者客户端的了解并分别响应。
+不过， 这样的程序还有个问题就是如果服务器如果正在响应客户端，那么你的输入得一直等到客户端断开连接才会有响应。比较好的方法是在一个更出色的颗粒度上运行，对客户端的响应分开进行，比如如果客户端输入多行，一次就输出一行。
+12.2.1 基于I/O复用的并发事件驱动服务器 事件驱动程序就是说把逻辑流当成state machines。state machines大概就是状态(states)，输入事件(input events)和将他们映射起来的转换(transitions)的集合。每个输入事件会触发一个转换，导致当前事件转换到下一个事件。</description>
+    </item>
+    
+    <item>
+      <title>红黑树</title>
+      <link>https://example.com/p/red-black-tree/</link>
+      <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
+      
+      <guid>https://example.com/p/red-black-tree/</guid>
+      <description>CLRS红黑树章节阅读心得
+什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
+在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
+红黑树的结点比BST的结点多出一个color属性，其值可能为red或black。红黑树有以下性质：
+ 每个结点的颜色非红即黑 根结点的颜色是黑的 叶子(NIL)的颜色是黑的 如果一个结点的颜色是红的，那么他的子结点一定是黑的 对于每个结点，所有从它出发到叶子的简单路径包含相同数量的黑色结点  我们把一个结点的简单路径上除其本身之外包含的黑色结点数量叫做black-height(黑高)。
+由于
+ 引理13.1：具有n个结点的红黑树的高最多为2lg(n+1)
+ 我们可以知道，动态操作Search、Minimum、Maximum、Successor和Predecessor在红黑树中花费是时间是O(lgn)。 下面为了便于处理红黑树代码的边界条件，使用一个哨兵T.nil来代替NULL。T.nil跟其他结点有相同属性，但除color为黑以外其他属性不重要。
+证明引理13.1 证明：我们先证明以任一结点x为根的子树至少包含$2^{bh(x)}-1$个内部结点。通过数学归纳法来证。
+如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。 对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)+(2^{bh(x)-1}-1)+1=2^{bh(x)}-1$个内部结点，证明完毕。
+然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n+1)≥h/2$，也就是$h≤2lg(n+1)$ 证明完毕。
+旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.</description>
+    </item>
+    
+    <item>
+      <title>渐进符号笔记</title>
+      <link>https://example.com/p/nation-note/</link>
+      <pubDate>Fri, 09 Mar 2018 16:46:27 +0000</pubDate>
+      
+      <guid>https://example.com/p/nation-note/</guid>
+      <description>学习《算法导论》的时候用到的几个渐进符号的定义了解过，但是总是忘记准确定义又要回去翻书，简略做下笔记以便查询
+渐进确界 Θ(theta) f(n) = Θ(g(n)) 表示存在正常数$c_1$， $c_2$，与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ $c_1$g(n) ≤ f(n) ≤ $c_2$g(n) 由定义可知，这里的等号并不是对称的而是包含关系，实际上我们可以说f(n) ∈ Θ(g(n))，同时要求f(n)是渐进非负的，也就是说f(n)在n达到一定规模的大小后保持非负数。
+渐进上界 O(big-oh) f(n) = O(g(n)) 表示存在正常数c与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ f(n) ≤ cg(n)
+O确定的是渐进上界，所以对于类似 $\frac12n^2 - 3n$，我们可以说 $\frac12n^2 - 3n$ = O($n^2$)，也可以说 $\frac12n^2 - 3n$ = O($n^3$)，但是第一种情况更加精确。 O(1)表示常数阶的时间复杂度，O(lgn)表示指数阶，以此类推。
+渐进下界 Ω(big-omege) f(n) = Ω(g(n)) 表示存在正常数c与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ cg(n) ≤ f(n)
+以上三种符号的图像： 非渐进紧确上下界 o(little-oh)与ω(little-omege) f(n) = o(g(n)) 表示对于任意常数c &amp;gt; 0，存在某常数$n_0$&amp;gt;0使得，对于任意n &amp;gt; $n_0$， 0 ≤ f(n) &amp;lt; cg(n) 例如：2n = o($n^2$) 但 $2n^2$ ≠ $o(n^2)$</description>
+    </item>
+    
+  </channel>
+</rss>

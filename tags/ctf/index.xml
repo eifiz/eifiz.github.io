@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>CTF on Eifiz Blog</title>
+    <link>https://example.com/tags/ctf/</link>
+    <description>Recent content in CTF on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 08 Feb 2021 20:25:08 +0000</lastBuildDate><atom:link href="https://example.com/tags/ctf/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>*ctf2021 oh-my-socket 复现</title>
+      <link>https://example.com/p/starctf2021-oh-my-socket/</link>
+      <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
+      
+      <guid>https://example.com/p/starctf2021-oh-my-socket/</guid>
+      <description>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
+审计题目 主办方公开了题目源码以及相关WP在他们的github上面
+https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
+可以发现起了3个容器，分别是webserver，client和server。并且我们拥有：
+ webserver上的root权限RCE client里的任意文件读取  在启动的时候，client会绑定一个端口，然后通过tcp主动连接server的一个端口，然后两边互相等待，处于阻塞状态。只要连上了server的该端口，发送*ctf即可得到server的flag。
+所以问题就是断开client和server的链接。
+因为3个容器同属一个内网，所以我们控制的webserver可以伪装client或者server发送tcp包，因为原始TCP协议不会去验证MAC地址。只要我们向client或者server发送一个RST的TCP包那就可以断开他们的连接了，但是前提是sequence字段需要准确。
+所以本题预期解法的重点也就在于通过侧信道方式获取client中的sequence字段，这也是出题人设置了一个client的任意文件读取的意义。
+而在向client发送正确RST包以后，client就会close该链接，然后再向server发送一个rst包即可
+预期解 Linux中有一个计数器DelayedAckLost，当系统接收的数据包中的序列号小于预期的序列号时，则认为网络出了问题需要重传，所以这个计数器就加一，而且这个计数器是可以通过文件/proc/net/netstat或者其他的文件如proc/self/net/netstat读取到，所以我们可以通过这种办法来判断发送的序列号是否小于预期序列号，从而在(0, 2^32)的区间里推断出预期序列号。
+因此，采用二分法找出预期序列号即可进行后续攻击。
+另外在测试中可能会发现一个神奇的现象，就是有时采用2^32-1作为序列号的时候计数器居然加一了。这是因为TCP为解决序列号回绕问题，在判断序列号大小的时候不是直接seq1&amp;gt;seq2，而是
+/* * The next routines deal with comparing 32 bit unsigned ints * and worry about wraparound (automatic with unsigned arithmetic). */ static inline int before(__u32 seq1, __u32 seq2) { return (__s32)(seq1-seq2) &amp;lt; 0; } #define after(seq2, seq1) before(seq1, seq2) 如果2个无符号数seq1减去seq2的差值转换为有符号数后小于0，则证明seq1小于seq2。换句话说，当seq1 - seq2的值足够大，使得第一个bit为1时，那么就认为seq1小于seq2。
+这就会影响到我们通过DelayedAckLost来进行判断序列号大小，因为在这种判断逻辑下，系统会认为2^31+x 小于 y (y &amp;lt; x &amp;lt; 2^31) 。这就会导致，在我们的预期程序逻辑中，</description>
+    </item>
+    
+  </channel>
+</rss>

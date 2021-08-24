@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='CLRS红黑树章节阅读心得
+什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
+在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
+红黑树的结点比BST的结点多出一个color属性，其值可能为red或black。红黑树有以下性质：
+ 每个结点的颜色非红即黑 根结点的颜色是黑的 叶子(NIL)的颜色是黑的 如果一个结点的颜色是红的，那么他的子结点一定是黑的 对于每个结点，所有从它出发到叶子的简单路径包含相同数量的黑色结点  我们把一个结点的简单路径上除其本身之外包含的黑色结点数量叫做black-height(黑高)。
+由于
+ 引理13.1：具有n个结点的红黑树的高最多为2lg(n&#43;1)
+ 我们可以知道，动态操作Search、Minimum、Maximum、Successor和Predecessor在红黑树中花费是时间是O(lgn)。 下面为了便于处理红黑树代码的边界条件，使用一个哨兵T.nil来代替NULL。T.nil跟其他结点有相同属性，但除color为黑以外其他属性不重要。
+证明引理13.1 证明：我们先证明以任一结点x为根的子树至少包含$2^{bh(x)}-1$个内部结点。通过数学归纳法来证。
+如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。 对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)&#43;(2^{bh(x)-1}-1)&#43;1=2^{bh(x)}-1$个内部结点，证明完毕。
+然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n&#43;1)≥h/2$，也就是$h≤2lg(n&#43;1)$ 证明完毕。
+旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.'><title>红黑树</title>
+
+<link rel='canonical' href='https://example.com/p/red-black-tree/'>
+
+<link rel="stylesheet" href="/scss/style.min.css"><meta property='og:title' content='红黑树'>
+<meta property='og:description' content='CLRS红黑树章节阅读心得
+什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
+在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
+红黑树的结点比BST的结点多出一个color属性，其值可能为red或black。红黑树有以下性质：
+ 每个结点的颜色非红即黑 根结点的颜色是黑的 叶子(NIL)的颜色是黑的 如果一个结点的颜色是红的，那么他的子结点一定是黑的 对于每个结点，所有从它出发到叶子的简单路径包含相同数量的黑色结点  我们把一个结点的简单路径上除其本身之外包含的黑色结点数量叫做black-height(黑高)。
+由于
+ 引理13.1：具有n个结点的红黑树的高最多为2lg(n&#43;1)
+ 我们可以知道，动态操作Search、Minimum、Maximum、Successor和Predecessor在红黑树中花费是时间是O(lgn)。 下面为了便于处理红黑树代码的边界条件，使用一个哨兵T.nil来代替NULL。T.nil跟其他结点有相同属性，但除color为黑以外其他属性不重要。
+证明引理13.1 证明：我们先证明以任一结点x为根的子树至少包含$2^{bh(x)}-1$个内部结点。通过数学归纳法来证。
+如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。 对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)&#43;(2^{bh(x)-1}-1)&#43;1=2^{bh(x)}-1$个内部结点，证明完毕。
+然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n&#43;1)≥h/2$，也就是$h≤2lg(n&#43;1)$ 证明完毕。
+旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.'>
+<meta property='og:url' content='https://example.com/p/red-black-tree/'>
+<meta property='og:site_name' content='Eifiz Blog'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='CLRS' /><meta property='article:tag' content='RBTree' /><meta property='article:tag' content='BST' /><meta property='article:published_time' content='2018-03-18T16:40:54&#43;00:00'/><meta property='article:modified_time' content='2018-03-18T16:40:54&#43;00:00'/>
+<meta name="twitter:title" content="红黑树">
+<meta name="twitter:description" content="CLRS红黑树章节阅读心得
+什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
+在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
+红黑树的结点比BST的结点多出一个color属性，其值可能为red或black。红黑树有以下性质：
+ 每个结点的颜色非红即黑 根结点的颜色是黑的 叶子(NIL)的颜色是黑的 如果一个结点的颜色是红的，那么他的子结点一定是黑的 对于每个结点，所有从它出发到叶子的简单路径包含相同数量的黑色结点  我们把一个结点的简单路径上除其本身之外包含的黑色结点数量叫做black-height(黑高)。
+由于
+ 引理13.1：具有n个结点的红黑树的高最多为2lg(n&#43;1)
+ 我们可以知道，动态操作Search、Minimum、Maximum、Successor和Predecessor在红黑树中花费是时间是O(lgn)。 下面为了便于处理红黑树代码的边界条件，使用一个哨兵T.nil来代替NULL。T.nil跟其他结点有相同属性，但除color为黑以外其他属性不重要。
+证明引理13.1 证明：我们先证明以任一结点x为根的子树至少包含$2^{bh(x)}-1$个内部结点。通过数学归纳法来证。
+如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。 对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)&#43;(2^{bh(x)-1}-1)&#43;1=2^{bh(x)}-1$个内部结点，证明完毕。
+然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n&#43;1)≥h/2$，也就是$h≤2lg(n&#43;1)$ 证明完毕。
+旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.">
+    </head>
+    <body class="
+    article-page has-toc
+">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex 
+    
+        extended
+    
+">
+    
+        <div id="article-toolbar">
+            <a href="https://example.com" class="back-home">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="15 6 9 12 15 18" />
+</svg>
+
+
+
+                <span>Back</span>
+            </a>
+        </div>
+    
+<main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" >
+                学习笔记
+            </a>
+        
+    </header>
+    
+
+    <h2 class="article-title">
+        <a href="/p/red-black-tree/">红黑树</a>
+    </h2>
+
+    
+
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Mar 18, 2018</time>
+            </div>
+        
+
+        
+    </footer>
+    
+</div>
+</header>
+
+    <section class="article-content">
+    <p>CLRS红黑树章节阅读心得</p>
+<h2 id="什么是红黑树">什么是红黑树</h2>
+<p>红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且<strong>结点的左子树的结点key值必定小于等于该结点的key值</strong>，右子树同理，大于等于。</p>
+<p>在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗<strong>平衡二叉树</strong>(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。</p>
+<!-- raw HTML omitted -->
+<p>红黑树的结点比BST的结点多出一个color属性，其值可能为red或black。红黑树有以下性质：</p>
+<ol>
+<li>每个结点的颜色非红即黑</li>
+<li>根结点的颜色是黑的</li>
+<li>叶子(NIL)的颜色是黑的</li>
+<li><strong>如果一个结点的颜色是红的，那么他的子结点一定是黑的</strong></li>
+<li><strong>对于每个结点，所有从它出发到叶子的简单路径包含相同数量的黑色结点</strong></li>
+</ol>
+<p>我们把一个结点的简单路径上除其本身之外包含的黑色结点数量叫做<strong>black-height</strong>(黑高)。</p>
+<p>由于</p>
+<blockquote>
+<p>引理13.1：具有n个结点的红黑树的高最多为2lg(n+1)</p>
+</blockquote>
+<p>我们可以知道，动态操作Search、Minimum、Maximum、Successor和Predecessor在红黑树中花费是时间是O(lgn)。
+下面为了便于处理红黑树代码的边界条件，使用一个哨兵T.nil来代替NULL。T.nil跟其他结点有相同属性，但除color为黑以外其他属性不重要。</p>
+<h2 id="证明引理131">证明引理13.1</h2>
+<p>证明：我们先证明以<strong>任一结点x为根的子树至少包含$2^{bh(x)}-1$个内部结点</strong>。通过数学归纳法来证。</p>
+<p>如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。
+对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)+(2^{bh(x)-1}-1)+1=2^{bh(x)}-1$个内部结点，证明完毕。</p>
+<p>然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以<strong>根结点的黑高至少为h/2</strong>。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n+1)≥h/2$，也就是$h≤2lg(n+1)$
+证明完毕。</p>
+<h2 id="旋转">旋转</h2>
+<p>因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用<strong>rotation</strong>(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。
+<img src="http://ww4.sinaimg.cn/large/0060lm7Tly1fpijfuka3gj30e404jdg2.jpg" alt="左旋与右旋"  /></p>
+<pre><code>LEFT-ROTATE(T,x)
+	y = x.right				//设置y
+	x.right = y.left		//把y的左子树移动成x的右子树
+	if y.left ≠ T.nil
+		y.left.p = x
+	y.p = x.p				//设置y的父节点为x的父结点
+	if x.p == T.nil
+		T.root = y
+	elseif x == x.p.left
+		x.p.left = y
+	else x.p.right = y
+	y.left = x				//把x放到y的左边
+	x.p = y
+</code></pre><p>左右旋都花费O(1)的时间。</p>
+<h2 id="插入">插入</h2>
+<p>向有n个结点的红黑树插入一个新结点花费O(lgn)时间，插入时先按照BST的插入方式插入再把新插入结点着色为红色，然后再通过一个<strong>RB-INSERT-FIXUP</strong>函数来对结点重新着色和旋转。</p>
+<pre><code>RB-INSERT(T,z)
+	y = T.nil
+	x = T.root
+	while x ≠ T.nil
+		y = x
+		if z.key &lt; x.key
+		x = x.left
+		else x = x.right
+	z.p = y
+	if y == T.nil
+		T.root = z
+	elseif z.key &lt; y.key
+		y.left = z
+	else y.right = z
+	z.left = T.nil
+	z.right = T.nil
+	z.color = RED
+	RB-INSERT-FIXUP(T,z)
+</code></pre><p>重点是RB-INSERT-FIXUP是如何工作的：</p>
+<pre><code>RB-INSERT-FIXUP(T,z)
+	while z.p.color == RED
+		if z.p == z.p.p.left
+			y = z.p.p.right
+			if y.color == RED
+				z.p.color = BLACK			//情况1
+				y.color = BLACK				//情况1
+				z.p.p.color = RED			//情况1
+				z = z.p.p				//情况1
+			else if z == z.p.right
+					z = z.p				//情况2
+					LEFT-ROTATE(T,z)		//情况2
+				z.p.color = BLACK			//情况3
+				z.p.p.color = RED			//情况3
+				RIGHT-ROTATE(T,z.p.p)			//情况3
+		else (same as then clause with &quot;right&quot; and &quot;left&quot; exchanged)
+	T.root.color = BLACK
+</code></pre><p>以下为范例，插入某结点后通过这个函数来修复被破坏的结构。
+<img src="http://ww1.sinaimg.cn/large/0060lm7Tly1fpks668hjdj30js0mbmyj.jpg" alt=""  /></p>
+<h3 id="分析修复过程">分析修复过程</h3>
+<p>修复过程是为了维护红黑树的性质，插入结点后可能被破坏的只有性质2(根结点为黑色结点，当插入的树为空树)和性质4(红结点的子结点为黑结点)。</p>
+<h4 id="分析三种情况">分析三种情况</h4>
+<p>首先，这个循环的大前提是z的父节点为黑色，另外以下分析建立在z的父节点为左孩子的情况下，右孩子的情况是类似的，伪代码里也省略了这一部分。
+<strong>情况1</strong>：
+z的叔结点y(z.p.p.right)是红色的情况。
+我们把y和z的父节点的颜色着色为黑，y的父节点着色为红，然后把z上移2层，指向原先的z的祖父结点。
+这种情况下，原先的z的父节点被着色为黑，所以原先的z不会再破坏红黑树的性质4，但是其祖父结点被着色为红有可能导致其破坏红黑树性质4，所以把z上移继续循环。
+另外，原先的子树α，β，γ，δ和ε都有一个黑色根结点，最后也只有一个黑色根结点，所以性质5没有被破坏。(图13-5)
+<img src="http://ww4.sinaimg.cn/large/0060lm7Tly1fpn05tguogj30ni09w74z.jpg" alt="图13-5"  />
+<strong>情况2</strong>：
+y是黑色且z为右孩子。
+z指向了父节点再对z进行左旋。
+这么做只是把情况2变成情况3并进入情况3的处理。
+<strong>情况3</strong> :
+y是黑色且z为左孩子。
+把z的父节点着色为黑，祖父结点着色为红，然后对祖父结点进行右旋操作。
+与情况1相似，所有子树的黑根结点树没有改变，同时路径中不会再出现连续的2个红色结点，所以性质4和5都满足。(图13-6)
+<img src="http://ww3.sinaimg.cn/large/0060lm7Tly1fpn05tbclhj30io05n74j.jpg" alt="图13-6"  /></p>
+<h4 id="证明">证明</h4>
+<p>使用循环不变量来证明上述过程：
+首先这个循环不变量是：
+a.  结点z是红色的
+b.  若z.p是根结点，则z.p是黑结点
+c.  若红黑树性质被破坏，则至多只有一个性质被破坏，要么是性质2，要么是性质4。
+<strong>初始化：</strong>
+在循环第一次迭代前，插入了一个红结点z。接下来就证明循环不变量各部分成立。
+a. 插入的是红色的必定成立。
+b. 如果z.p是根，那么开始的时候是黑的，并且循环开始前是不变的。
+c. 循环开始前，性质1、3、5是成立的。若违反了性质2，那么插入的是根结点，所以其父节点是T.nil，满足性质4。若违反了性质4，那么由于z的子节点是T.nil，并且在z加入前该树的性质没有被违反，所以必定是由于z.p和z都是红色违反了该性质。
+<strong>保持：</strong>
+循环会开始是因为z.p是红色的，所以由性质2和4我们知道z.p.p必定存在且为黑色的。
+a. 三种情况下z最后都指向红色结点，所以a是满足的。
+b. 情况1结束的时候z.p的颜色并没有被改变过，所以若其本来是根结点，则z.p是黑色的。情况2会被转换成情况3继续执行，情况3把z.p着色为黑色的，无论其是否为根结点。所以b是满足的。
+c. 分析情况1的时候我们已经证明了性质5不会被破坏，显然性质1和3也不会被破坏，若情况1结束的时候z是根结点，则破坏了性质2，但不会破坏性质4因为根结点的父节点是黑色的T.nil，若情况1结束的时候z不是根结点且z.p是红色的，则破坏了性质4但不破坏性质2，所以情况1满足c。
+情况3结束的时候，性质1、3、4、5都是满足的。同时，由于z在情况2、3中不可能是根结点，所以性质2也满足。因此情况2、3也满足c。
+<strong>终止：</strong>
+循环终止是因为z.p是黑的(若z是根结点，那么z.p是黑色的T.nil)。这样，终止的时候树不会违反性质4。根据循环不变量，唯一可能不成立的只有性质2，所以最后一行就恢复了这个性质。所以最后RB-INSERT-FIXUP终止时，所有红黑树性质成立。</p>
+<h4 id="分析">分析</h4>
+<p>由于红黑树高度为O(lgn)，所以RB-INSERT除修复部分花费的时间为O(lgn)。而修复过程中只有情况1的时候才会继续循环，且每次上升2层，所以循环可能会被执行的时间是O(lgn)。因此，总花费时间为O(lgn)。另外旋转不会超过2次，因为一旦进入情况2或情况3，while就结束了。</p>
+<h2 id="删除">删除</h2>
+<p>删除与其他操作一样也花费O(lgn)时间。
+与二叉树一样，我们需要准备一个子函数<strong>RB-TRANSPLANT</strong>来将某个结点v替换掉结点u。</p>
+<pre><code>RB-TRANSPLANT(T,u,v)
+	if u.p == T.nil
+		T.root = v
+	elseif u == u.p.left
+		u.p.left= v
+	else u.p.right = v
+	v.p = u.p
+</code></pre><p>这个函数先判断u的父节点是否为T.nil，如果是则改变T.root为v结点，否则就再通过判断u是u父结点的左孩子还是右孩子来使其父结点的某个指针指向v，然后在把v的父节点指向u的父结点。</p>
+<p>然后就是正戏<strong>RB-DELETE</strong></p>
+<pre><code>RB-DELETE(T,z)
+	y = z
+	y-original-color = y.color
+	if z.left == T.nil
+		x = z.right
+		RB-TRANSPLANT(T,z,z.right)
+	elseif z.right == T.nil
+		x = z.left
+		RB-TRANSPLANT(T,z,z.left)
+	else y = TREE-MINIMUM(z.right)
+		y-original-color = y.color
+		x = y.right
+		if y.p == z
+			x.p = y
+		else RB-TRANSPLANT(T,y,y.right)
+			y.right = z.right
+			y.right.p = y
+		RB-TRANSPLANT(T,z,y)
+		y.left = z.left
+		y.left.p = y
+		y.color = z.color
+	if y-original-color == BLACK
+		RB-DELETE-FIXUP(T,x)
+</code></pre><h3 id="分析删除过程">分析删除过程</h3>
+<p>分析这个函数的过程。
+先让y指向要被删除的结点z，并记录下y原来的颜色。
+然后4到8行在z只有一个孩子的情况下，用z的孩子代替了z的位置，并且让x指向该孩子，而如果z有2个孩子进入10到21行。
+先让y指向z的后继，此时的y指向的结点就是要用来代替z的位置的结点，并记录y原来的颜色，然后让x指向y的右孩子(因为y是z的后继所以y是没有左孩子的，但是右孩子也可能是T.nil)，紧接进入13到17行，判断y是不是z的孩子结点，如果是就让x的父结点指向y(此时的x有可能是T.nil但是依旧这么做)，如果不是那就让y的右孩子代替y的位置，而y则把原来z的右孩子作为自己新的右孩子。此时判断结束，就用y代替了z的位置，并且把z的颜色赋值给了y。
+最后，判断y原来的颜色是否为黑，若是则进入<strong>RB-DELETE-FIXUP</strong>修复被破坏的红黑树性质。</p>
+<p>对y和x的总结：</p>
+<ul>
+<li>z只有一个结点的时候，y指向被删除的z，而x指向了z的孩子，并且代替了z位置。</li>
+<li>z有两个结点的时候，y指向了z的后继，也就是代替了z位置的结点，x则指向了z的后继的右孩子，也就是代替了z的后继位置的结点。</li>
+<li>所以x永远指向了y原来的位置，而y有可能是被删除的结点也可能是移动的结点。</li>
+</ul>
+<p>这个函数与TREE-DELETE类似，而主要不同在于我们需要记录y原来的颜色和x的踪迹来解决红黑树性质可能被破坏的问题。</p>
+<p>然后我们讨论一下为何只有y是黑色的时候会破坏红黑树性质：
+首先，若y是红色的话，红黑树性质是必定保持的，因为：</p>
+<ol>
+<li>红色结点的移动和删除不改变树的黑高</li>
+<li>因为y是红色的，当y是z的时候，显然不会出现红结点相邻，当y代替了z的位置时，无论y是否z的孩子结点，都不会出现红结点相邻。同时，若y是红色，则x必定是黑色的，所以代替了y的位置的x不会使两个红结点相邻。</li>
+<li>若y是红色，y不可能是根结点，所以根结点依然是黑色。</li>
+</ol>
+<p>若y是黑色，那有可能出现3个问题：</p>
+<ol>
+<li>y是根结点且y的一个红色孩子(x)成为了新的根结点。</li>
+<li>若x和x.p(也就是原来的y.p)都是红的，那就违反了性质4</li>
+<li>移动y使得之前包含y的简单路径黑结点个数减少1，因此，原来y的祖先都不满足性质5。
+为了修复这些问题，就是x视为还有一重额外的黑色，所以x的颜色就变成了红黑色(color属性为RED)或双重黑色(color属性为黑)。因此就要<strong>RB-DELETE-FIXUP</strong>登场了</li>
+</ol>
+<h3 id="分析修复过程-1">分析修复过程</h3>
+<pre><code>RB-DELETE-FIXUP(T,x)
+	while x ≠ T.root and x.color == BLACK
+		if x == x.p.left
+			ω = x.p.right
+			if ω.color == RED
+				ω.color = BLACK						// 情况1
+				x.p.color = RED						// 情况1
+				LEFT-ROTATE(T,x.p)					// 情况1
+				ω = x.p.right						// 情况1
+			if ω.left.color == BLACK and ω.right.color == BLACK
+				ω.color = RED						// 情况2
+				x = x.p								// 情况2
+			else if ω.right.color == BLACK
+					ω.left.color = BLACK			// 情况3
+					w.color = RED					// 情况3
+					RIGHT-ROTATE(T,ω)				// 情况3
+					ω = x.p.right					// 情况3
+				ω.color = x.p.color					// 情况4
+				x.p.color = BLACK					// 情况4
+				ω.right.color = BLACK				// 情况4
+				LEFT-ROTATE(T,x.p)					// 情况4
+				x = T.root							// 情况4
+		else (same as then clause with &quot;right&quot; and &quot;left&quot; exchanged)
+	 x.color = BLACK
+</code></pre><p>分析代码：</p>
+<p>首先，循环成立的条件是x不为root且x的颜色为黑色(双重黑色)，代码中x是左孩子与右孩子的代码是对称的所以只写出x是左孩子的部分。</p>
+<p>先让ω指向x的兄弟结点。
+若ω颜色为红，则符合情况1，先把ω着色为黑，x父节点着色为红，然后对x的父结点执行左旋，交换了ω与父结点在树中的位置。然后在循环中继续。
+若ω左孩子为黑色而右孩子为红色则进入情况2，把ω着色为红，x指向x的父节点。否则判断ω右孩子是否为黑色，若是，进入情况3然后再进入情况4，不然就直接进入情况4。
+情况3下先把ω左孩子着色为黑，ω着色为红，右旋ω，然后把ω再重新指向x的兄弟结点。
+情况4中先把ω着色成和父结点一样的颜色，然后把父结点着色为黑，ω的右孩子着色为黑，左旋x的父结点，把x指向根结点，循环结束，把x着色为黑(一重黑色)。</p>
+<p>因为有四种情况，所以我们有以下的对应图：
+<img src="http://ww2.sinaimg.cn/large/0060lm7Tly1fpqnemwk0fj30nf0ip0uy.jpg" alt=""  /></p>
+<p>独立分析各种情况前，我们可以发现每种情况中，从子树的根(包括根自己)到每课子树(图中的α，β……)之间的黑结点个数(加上x的额外黑色)没有被改变，因此，性质5是否被破坏是不受这个修复过程影响的。</p>
+<p><strong>情况1</strong>：x的右兄弟ω结点是红的。
+那么x的父结点必然是黑的。所以我们把ω和父结点颜色交换以后对父结点左旋，ω重新指向x的右兄弟结点，所以ω现在是黑色的，以下情况ω都是黑色的。此时由情况1进入情况2、3、4中的一种。</p>
+<p><strong>情况2</strong>：ω的孩子均为黑。
+因为ω也是黑的，所以我们把ω和x去掉一层黑色，x就只有一重黑色而ω是红的，然后x指向其父结点，使得x.p增加了一层黑色，以此来重复while循环。注意，若是由情况1进入情况2，那么此时的x是红黑色，循环终止。</p>
+<p><strong>情况3</strong>：ω左孩子为红，右孩子为黑。
+那么把ω和左孩子交换颜色然后对ω右旋，ω重新指向x的右兄弟结点。这么做没有违反任何性质又进入了情况4。</p>
+<p><strong>情况4</strong>：ω的右孩子是红。
+把ω和父结点交换颜色，并把ω的右孩子设置为黑色，对x的父结点左旋，这样去掉了x的一重黑色，使得x变成一重黑色，然后把x指向root来结束循环。</p>
+<p>最后循环结束，把x设置为黑。</p>
+<h3 id="分析-1">分析</h3>
+<p>不调用RB-DELETE-FIXUP的时间为O(lgn)。在RB-DELETE-FIXUP中，情况1、3、4在常数次的颜色改变和最多3次的旋转后就终止循环，而情况2会把指针上移最多O(lgn)次且不进行任何旋转。所以，RB-DELETE-FIXUP要花费O(lgn)的时间，所以RB-DELETE运行总时间为O(lgn)</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/clrs/">CLRS</a>
+        
+            <a href="/tags/rbtree/">RBTree</a>
+        
+            <a href="/tags/bst/">BST</a>
+        
+    </section>
+
+
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.css"integrity="sha384-RZU/ijkSsFbcmivfdRBQDtwuwVqK7GMOw6IMvKyeWL2K5UAlyp6WonmB8m7Jd0Hn"crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.js"integrity="sha384-pK1WpvzWVBQiP0/GjnvRxV4mOb0oxFuyRxJlk6vVw146n3egcN5C925NCP7a7BY8"crossorigin="anonymous"
+                defer="true"
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/contrib/auto-render.min.js"integrity="sha384-vZTG03m&#43;2yp6N6BNi5iM4rW4oIwk5DfcNdFfxkk9ZWpDriOkXX8voJBFrAO7MpVl"crossorigin="anonymous"
+                defer="true"
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ]
+        });})
+</script>
+    
+</article>
+
+    <aside class="related-contents--wrapper">
+    
+    
+        <h2 class="section-title">Related contents</h2>
+        <div class="related-contents">
+            <div class="flex article-list--tile">
+                
+                    
+<article class="">
+    <a href="/p/nation-note/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">渐进符号笔记</h2>
+        </div>
+    </a>
+</article>
+                
+                    
+<article class="">
+    <a href="/p/csapp-chapter-12/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">CSAPP十二章阅读笔记</h2>
+        </div>
+    </a>
+</article>
+                
+            </div>
+        </div>
+    
+</aside>
+
+     
+     
+        
+    <script src="https://utteranc.es/client.js" 
+        repo="eifiz/eifiz.github.io"
+        issue-term="pathname"
+        
+        label="Comment"
+        
+        crossorigin="anonymous"
+        async
+        >
+</script>
+
+<style>
+    .utterances {
+        max-width: unset;
+    }
+</style>
+
+<script>
+    function setUtterancesTheme(theme) {
+        let utterances = document.querySelector('.utterances iframe');
+        if (utterances) {
+            utterances.contentWindow.postMessage(
+                {
+                    type: 'set-theme',
+                    theme: `github-${theme}`
+                },
+                'https://utteranc.es'
+            );
+        }
+    }
+
+    addEventListener('message', event => {
+        if (event.origin !== 'https://utteranc.es') return;
+        setUtterancesTheme(document.documentElement.dataset.scheme)
+    });
+
+    window.addEventListener('onColorSchemeChange', (e) => {
+        setUtterancesTheme(e.detail)
+    })
+</script>
+
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2020 - 
+        
+        2021 Eifiz Blog
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.1.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer="true"
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer="true"
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css"integrity="sha256-c0uckgykQ9v5k&#43;IqViZOZKc47Jn7KQil4/MP3ySA3F8="crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css"integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE="crossorigin="anonymous"
+            >
+
+            </main>
+    
+        <aside class="sidebar right-sidebar sticky">
+            <section class="widget archives">
+                <div class="widget-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+                </div>
+                <h2 class="widget-title section-title">Table of contents</h2>
+                
+                <div class="widget--toc">
+                    <nav id="TableOfContents">
+  <ol>
+    <li><a href="#什么是红黑树">什么是红黑树</a></li>
+    <li><a href="#证明引理131">证明引理13.1</a></li>
+    <li><a href="#旋转">旋转</a></li>
+    <li><a href="#插入">插入</a>
+      <ol>
+        <li><a href="#分析修复过程">分析修复过程</a>
+          <ol>
+            <li><a href="#分析三种情况">分析三种情况</a></li>
+            <li><a href="#证明">证明</a></li>
+            <li><a href="#分析">分析</a></li>
+          </ol>
+        </li>
+      </ol>
+    </li>
+    <li><a href="#删除">删除</a>
+      <ol>
+        <li><a href="#分析删除过程">分析删除过程</a></li>
+        <li><a href="#分析修复过程-1">分析修复过程</a></li>
+        <li><a href="#分析-1">分析</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+                </div>
+            </section>
+        </aside>
+    
+
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js"integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g="crossorigin="anonymous"
+                defer="false"
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

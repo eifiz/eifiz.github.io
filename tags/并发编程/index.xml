@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>并发编程 on Eifiz Blog</title>
+    <link>https://example.com/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</link>
+    <description>Recent content in 并发编程 on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 16 Dec 2018 23:32:43 +0000</lastBuildDate><atom:link href="https://example.com/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CSAPP十二章阅读笔记</title>
+      <link>https://example.com/p/csapp-chapter-12/</link>
+      <pubDate>Sun, 16 Dec 2018 23:32:43 +0000</pubDate>
+      
+      <guid>https://example.com/p/csapp-chapter-12/</guid>
+      <description>本文为CSAPP第十二章的阅读笔记，参照的是英文书，专业名词翻译可能不准确，配合原书食用更佳。
+12.0 并发就是逻辑流上的同时发生，运行。在计算机系统的不同层面上都有所体现。并发是系统内核运行多个应用程序的一种机制，当然也不只限于内核。
+应用层级的并发有以下例子：
+ 访问缓慢的I/O设备 与人类互动 通过推迟操作来减低等待时间 服务多个网络客户端 在多核机器上进行并行计算  使用应用层级并发技术的程序叫并发程序。操作系统提供3种基本方法来编写并发程序：
+ 进程 I/O复用 线程  12.1 通过进程实现 最简单的实现并发的方式就是通过多进程，具体是利用fork, exec 和waitpid等相关函数。
+书上在这里给了一个服务器程序作为例子。首先假设有2个客户端和1个服务端，服务端监听一个listening descriptor (假设是3)。然后假设，从客户端收到一个链接请求，返回了一个connected descriptor (假设是4)。接着服务器fork出一个子进程，子进程关闭自己的listening descriptor 3，父进程关闭connected descriptor 4，然后子进程开始响应客户端的请求，父进程继续监听。因为子进程和父进程都指向相同的文件表入口(file table entry)，所以如果父进程不关闭connected descriptor 4，那就会导致内存泄露，消耗有效内存导致系统崩溃。在这之后如果客户端2向listening descriptor 3发起请求，那么就返回connected descriptor 5并重复以上过程。
+考虑到服务器一般都是长时间运行，所以在976页的代码中4到9行包含了一个SIGCHLD处理器来捕获僵尸子进程。因为SIGCHLD处理器执行的时候SIGCHLD信号是被阻塞的，Linux的信号处理又不是队列的，所以需要这个SIGCHLD处理器去捕获多个僵尸子进程。
+ 这种实现方式有个很明确的特点，文件表是共享的但用户地址空间不是。所以一个进程是不可能意外访问到其他进程的虚拟内存，这也保证不会有很多奇怪的错误。如果进程要共享信息那就需要使用IPC机制，但是这就会导致速度变慢。
+12.2 通过I/O复用实现 现在假设我们有一个服务器程序既要响应客户端网络请求，又要响应用户(管理员)的输入。那么不管我们先监听哪个事件都不怎么好，所以我们需要I/O复用这种技术来同时监听多个事件。基本思想就是使用select函数去要求内核挂起进程，在一个或更多个I/O事件发生后返回控制权给应用程序。
+int select(int n, fd_set *fdset, NULL, NULL, NULL); 我们只关注select函数的前2个参数，第二个参数类型为fd_set，表示一个descriptors集合，实际上就是一个n长度的bit向量*$b_{n-1},&amp;hellip;.,b_1,b_0$*。 每个$b_k$都对应响应一个descriptor k。如果$b_k$是1，那么这个descriptor k就是fd_set的有效成员。除了声明和赋值以外，你只能用FD_ZERO等宏来操作fd_set。第一个参数一般是descriptors集合的最大基数。 返回值是ready descriptors的个数，如果出错就返回-1。
+当一个向descriptor k读1 byte的请求不会被阻塞的时候，这个descriptor就是ready的。我们向select传入fdset后，执行fdset的指针会被指向fdset的一个子集 ready set。所以我们每次都要更新传入select的fdset的指针。
+书上给出的示例代码先声明了一个read_set，然后把stdin和服务器监听的listenfd添加到read_set，然后开始死循环。每次循环先把read_set的值赋予ready_set，调用select并传入ready_set。在select后面添加判断代码，依次判断是否有来自用户的输入或者客户端的了解并分别响应。
+不过， 这样的程序还有个问题就是如果服务器如果正在响应客户端，那么你的输入得一直等到客户端断开连接才会有响应。比较好的方法是在一个更出色的颗粒度上运行，对客户端的响应分开进行，比如如果客户端输入多行，一次就输出一行。
+12.2.1 基于I/O复用的并发事件驱动服务器 事件驱动程序就是说把逻辑流当成state machines。state machines大概就是状态(states)，输入事件(input events)和将他们映射起来的转换(transitions)的集合。每个输入事件会触发一个转换，导致当前事件转换到下一个事件。</description>
+    </item>
+    
+  </channel>
+</rss>

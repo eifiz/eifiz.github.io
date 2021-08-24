@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Eifiz Blog</title>
+    <link>https://example.com/tags/</link>
+    <description>Recent content in Tags on Eifiz Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Web</title>
+      <link>https://example.com/tags/web/</link>
+      <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/tags/web/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>XSS</title>
+      <link>https://example.com/tags/xss/</link>
+      <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/tags/xss/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>CTF</title>
+      <link>https://example.com/tags/ctf/</link>
+      <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
+      
+      <guid>https://example.com/tags/ctf/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Nodejs</title>
+      <link>https://example.com/tags/nodejs/</link>
+      <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/tags/nodejs/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>原型链污染</title>
+      <link>https://example.com/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/</link>
+      <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>CSAPP</title>
+      <link>https://example.com/tags/csapp/</link>
+      <pubDate>Sun, 16 Dec 2018 23:32:43 +0000</pubDate>
+      
+      <guid>https://example.com/tags/csapp/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>并发编程</title>
+      <link>https://example.com/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</link>
+      <pubDate>Sun, 16 Dec 2018 23:32:43 +0000</pubDate>
+      
+      <guid>https://example.com/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>BST</title>
+      <link>https://example.com/tags/bst/</link>
+      <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
+      
+      <guid>https://example.com/tags/bst/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>CLRS</title>
+      <link>https://example.com/tags/clrs/</link>
+      <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
+      
+      <guid>https://example.com/tags/clrs/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>RBTree</title>
+      <link>https://example.com/tags/rbtree/</link>
+      <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
+      
+      <guid>https://example.com/tags/rbtree/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

