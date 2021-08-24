@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on Eifiz Blog</title>
-    <link>https://example.com/post/</link>
+    <link>https://eifiz.github.io/post/</link>
     <description>Recent content in Posts on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>探索DOM XSS一个trick的原理</title>
-      <link>https://example.com/p/a-trick-in-dom-xss/</link>
+      <link>https://eifiz.github.io/p/a-trick-in-dom-xss/</link>
       <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://example.com/p/a-trick-in-dom-xss/</guid>
+      <guid>https://eifiz.github.io/p/a-trick-in-dom-xss/</guid>
       <description>文章首发于安全客： https://www.anquanke.com/post/id/250538
  前段时间P牛在他的星球发了一个XSS的小挑战（关于挑战的更多细节和解法见P牛的博客或者星球），我用的是DOM clobbering的方式完成。事后P牛给出了另一个trick，我看不懂但大受震撼，所以本文就来探讨一下这个trick的原理。
 以下测试的步骤都是Win10 &amp;amp; Chrome 最新版(92.0.4515.131) 下进行的；作者水平有限，如有错漏，还请各位师傅指正。
@@ -26,10 +26,10 @@
     
     <item>
       <title>*ctf2021 oh-my-socket 复现</title>
-      <link>https://example.com/p/starctf2021-oh-my-socket/</link>
+      <link>https://eifiz.github.io/p/starctf2021-oh-my-socket/</link>
       <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
       
-      <guid>https://example.com/p/starctf2021-oh-my-socket/</guid>
+      <guid>https://eifiz.github.io/p/starctf2021-oh-my-socket/</guid>
       <description>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
 审计题目 主办方公开了题目源码以及相关WP在他们的github上面
 https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
@@ -48,10 +48,10 @@ https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
     
     <item>
       <title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
-      <link>https://example.com/p/xnuca2019-hardjs-writeup/</link>
+      <link>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</link>
       <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://example.com/p/xnuca2019-hardjs-writeup/</guid>
+      <guid>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</guid>
       <description>文章首发于先知社区：https://xz.aliyun.com/t/6113
  前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
 初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。
@@ -68,10 +68,10 @@ var sql = &amp;#34;select `id`,`dom` from `html` where userid=? &amp;#34;; var r
     
     <item>
       <title>CSAPP十二章阅读笔记</title>
-      <link>https://example.com/p/csapp-chapter-12/</link>
+      <link>https://eifiz.github.io/p/csapp-chapter-12/</link>
       <pubDate>Sun, 16 Dec 2018 23:32:43 +0000</pubDate>
       
-      <guid>https://example.com/p/csapp-chapter-12/</guid>
+      <guid>https://eifiz.github.io/p/csapp-chapter-12/</guid>
       <description>本文为CSAPP第十二章的阅读笔记，参照的是英文书，专业名词翻译可能不准确，配合原书食用更佳。
 12.0 并发就是逻辑流上的同时发生，运行。在计算机系统的不同层面上都有所体现。并发是系统内核运行多个应用程序的一种机制，当然也不只限于内核。
 应用层级的并发有以下例子：
@@ -90,10 +90,10 @@ int select(int n, fd_set *fdset, NULL, NULL, NULL); 我们只关注select函数�
     
     <item>
       <title>红黑树</title>
-      <link>https://example.com/p/red-black-tree/</link>
+      <link>https://eifiz.github.io/p/red-black-tree/</link>
       <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
       
-      <guid>https://example.com/p/red-black-tree/</guid>
+      <guid>https://eifiz.github.io/p/red-black-tree/</guid>
       <description>CLRS红黑树章节阅读心得
 什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
 在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
@@ -110,10 +110,10 @@ int select(int n, fd_set *fdset, NULL, NULL, NULL); 我们只关注select函数�
     
     <item>
       <title>渐进符号笔记</title>
-      <link>https://example.com/p/nation-note/</link>
+      <link>https://eifiz.github.io/p/nation-note/</link>
       <pubDate>Fri, 09 Mar 2018 16:46:27 +0000</pubDate>
       
-      <guid>https://example.com/p/nation-note/</guid>
+      <guid>https://eifiz.github.io/p/nation-note/</guid>
       <description>学习《算法导论》的时候用到的几个渐进符号的定义了解过，但是总是忘记准确定义又要回去翻书，简略做下笔记以便查询
 渐进确界 Θ(theta) f(n) = Θ(g(n)) 表示存在正常数$c_1$， $c_2$，与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ $c_1$g(n) ≤ f(n) ≤ $c_2$g(n) 由定义可知，这里的等号并不是对称的而是包含关系，实际上我们可以说f(n) ∈ Θ(g(n))，同时要求f(n)是渐进非负的，也就是说f(n)在n达到一定规模的大小后保持非负数。
 渐进上界 O(big-oh) f(n) = O(g(n)) 表示存在正常数c与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ f(n) ≤ cg(n)

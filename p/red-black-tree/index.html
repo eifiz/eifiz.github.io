@@ -14,7 +14,7 @@
 然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n&#43;1)≥h/2$，也就是$h≤2lg(n&#43;1)$ 证明完毕。
 旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.'><title>红黑树</title>
 
-<link rel='canonical' href='https://example.com/p/red-black-tree/'>
+<link rel='canonical' href='https://eifiz.github.io/p/red-black-tree/'>
 
 <link rel="stylesheet" href="/scss/style.min.css"><meta property='og:title' content='红黑树'>
 <meta property='og:description' content='CLRS红黑树章节阅读心得
@@ -29,7 +29,7 @@
 如果x高度为0，那就是叶子结点，所以其内部结点为$2^{bh(x)}-1$ = 0。 对于高度大于0的结点x，因为我们把指向的NIL也当做子结点，所以其子结点一定有2个，并且黑高为bh(x)或bh(x)-1，所以由假设可得子结点至少有$2^{bh(x)-1}-1$个内部结点，所以x至少有$(2^{bh(x)-1}-1)&#43;(2^{bh(x)-1}-1)&#43;1=2^{bh(x)}-1$个内部结点，证明完毕。
 然后根据红黑树的性质5，从根到叶子的简单路径上，至少一半的结点是黑色，所以根结点的黑高至少为h/2。 所以 $n≥2^{h/2}-1$，我们把1移到左边然后取对数有$lg(n&#43;1)≥h/2$，也就是$h≤2lg(n&#43;1)$ 证明完毕。
 旋转 因为BST中的插入和删除如果直接作用于红黑树可能会导致结果违反红黑树的性质，所以我们需要改变树中某些结点的颜色和指针结构来维护性质。改变指针结构就是用rotation(旋转)来完成。旋转有左旋和右旋。对结点x左旋的时候需要假设其右孩子y不是NIL，左旋是以x到y的链为“支链”，使得y代替x成为子树的新结点，x成为y的左孩子，而y的左孩子则成为x的右孩子。右旋同理。 LEFT-ROTATE(T,x) y = x.right	//设置y x.right = y.left	//把y的左子树移动成x的右子树 if y.left ≠ T.nil y.left.p = x y.p = x.p	//设置y的父节点为x的父结点 if x.p == T.nil T.root = y elseif x == x.p.left x.p.left = y else x.p.right = y y.'>
-<meta property='og:url' content='https://example.com/p/red-black-tree/'>
+<meta property='og:url' content='https://eifiz.github.io/p/red-black-tree/'>
 <meta property='og:site_name' content='Eifiz Blog'>
 <meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='CLRS' /><meta property='article:tag' content='RBTree' /><meta property='article:tag' content='BST' /><meta property='article:published_time' content='2018-03-18T16:40:54&#43;00:00'/><meta property='article:modified_time' content='2018-03-18T16:40:54&#43;00:00'/>
 <meta name="twitter:title" content="红黑树">
@@ -78,7 +78,7 @@
 ">
     
         <div id="article-toolbar">
-            <a href="https://example.com" class="back-home">
+            <a href="https://eifiz.github.io" class="back-home">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
   <path stroke="none" d="M0 0h24v24H0z"/>
   <polyline points="15 6 9 12 15 18" />

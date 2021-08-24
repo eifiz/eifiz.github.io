@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Eifiz Blog</title>
-        <link>https://example.com/</link>
+        <link>https://eifiz.github.io/</link>
         <description>Recent content on Eifiz Blog</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>探索DOM XSS一个trick的原理</title>
-        <link>https://example.com/p/a-trick-in-dom-xss/</link>
+        <link>https://eifiz.github.io/p/a-trick-in-dom-xss/</link>
         <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
         
-        <guid>https://example.com/p/a-trick-in-dom-xss/</guid>
+        <guid>https://eifiz.github.io/p/a-trick-in-dom-xss/</guid>
         <description>&lt;blockquote&gt;
 &lt;p&gt;文章首发于安全客： &lt;a class=&#34;link&#34; href=&#34;https://www.anquanke.com/post/id/250538&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;https://www.anquanke.com/post/id/250538&lt;/a&gt;&lt;/p&gt;
@@ -55,7 +55,7 @@
 &lt;p&gt;我们知道JS是通过DOM接口来操作文档的，而HTML文档也是用DOM树来表示。所以在浏览器的渲染过程中，我们最关注的就是DOM树是如何构建的。&lt;/p&gt;
 &lt;p&gt;解析一份文档时，先由标记生成器做词法分析，将读入的字符转化为不同类型的Token，然后将Token传递给树构造器处理；接着标识识别器继续接收字符转换为Token，如此循环。实际上对于很多其他语言，词法分析全部完成后才会进行语法分析（树构造器完成的内容），但由于HTML的特殊性，树构造器工作的时候有可能会修改文档的内容，因此这个过程需要循环处理。&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 77; flex-basis: 184px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image017.png&#34; data-size=&#34;308x400&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image017.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image017.png&#34; data-size=&#34;308x400&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image017.png&#34;
 				
 				width=&#34;308&#34;
 				height=&#34;400&#34;
@@ -73,7 +73,7 @@
 &lt;h3 id=&#34;img失败原因&#34;&gt;img失败原因&lt;/h3&gt;
 &lt;p&gt;先来找一下失败案例的原因，看看是在哪里触发了img payload中的事件代码。将过滤的代码注释以后，注入payload并打断点调试一下。&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 152; flex-basis: 366px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813225153505.png&#34; data-size=&#34;1437x941&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813225153505.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813225153505.png&#34; data-size=&#34;1437x941&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813225153505.png&#34;
 				
 				width=&#34;1437&#34;
 				height=&#34;941&#34;
@@ -84,7 +84,7 @@
 	&lt;/figure&gt;&lt;/p&gt;
 &lt;p&gt;可以发现即使代码已经执行到最后一步，但在没有退出JS环境以前依然还没有弹窗。&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 242; flex-basis: 582px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813225251011.png&#34; data-size=&#34;1589x655&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813225251011.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813225251011.png&#34; data-size=&#34;1589x655&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813225251011.png&#34;
 				
 				width=&#34;1589&#34;
 				height=&#34;655&#34;
@@ -105,7 +105,7 @@
   &lt;span class=&#34;p&#34;&gt;});&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;测试结果：&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 207; flex-basis: 497px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813230319606.png&#34; data-size=&#34;1133x547&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813230319606.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813230319606.png&#34; data-size=&#34;1133x547&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813230319606.png&#34;
 				
 				width=&#34;1133&#34;
 				height=&#34;547&#34;
@@ -119,7 +119,7 @@
 &lt;p&gt;继续用断点调试svg payload为何成功。&lt;/p&gt;
 &lt;p&gt;在&lt;code&gt;root.innerHtml = data&lt;/code&gt;断下来后，点击单步调试。&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 186; flex-basis: 447px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813231122037.png&#34; data-size=&#34;1363x731&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813231122037.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813231122037.png&#34; data-size=&#34;1363x731&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813231122037.png&#34;
 				
 				width=&#34;1363&#34;
 				height=&#34;731&#34;
@@ -191,7 +191,7 @@
   &lt;span class=&#34;p&#34;&gt;});&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;同时，我们将注入代码也再套嵌一层&lt;code&gt;&amp;lt;svg onload=console.log(&amp;quot;svg0&amp;quot;)&amp;gt;&amp;lt;svg onload=console.log(&amp;quot;svg1&amp;quot;)&amp;gt;&amp;lt;svg onload=console.log(&amp;quot;svg2&amp;quot;)&amp;gt;&lt;/code&gt;&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 289; flex-basis: 695px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210814161029283.png&#34; data-size=&#34;1429x493&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210814161029283.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210814161029283.png&#34; data-size=&#34;1429x493&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210814161029283.png&#34;
 				
 				width=&#34;1429&#34;
 				height=&#34;493&#34;
@@ -271,7 +271,7 @@
  &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;2000&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;代码修改前：&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 356; flex-basis: 856px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813185304244.png&#34; data-size=&#34;1567x439&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813185304244.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813185304244.png&#34; data-size=&#34;1567x439&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813185304244.png&#34;
 				
 				width=&#34;1567&#34;
 				height=&#34;439&#34;
@@ -283,7 +283,7 @@
 &lt;p&gt;执行失败。&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;代码修改后：&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 312; flex-basis: 749px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813185407934.png&#34; data-size=&#34;1483x475&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210813185407934.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813185407934.png&#34; data-size=&#34;1483x475&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210813185407934.png&#34;
 				
 				width=&#34;1483&#34;
 				height=&#34;475&#34;
@@ -326,7 +326,7 @@
   &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
  &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;	
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;figure style=&#34;flex-grow: 123; flex-basis: 295px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210814114111781.png&#34; data-size=&#34;1321x1073&#34;&gt;&lt;img src=&#34;https://example.com/p/a-trick-in-dom-xss/image-20210814114111781.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210814114111781.png&#34; data-size=&#34;1321x1073&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/a-trick-in-dom-xss/image-20210814114111781.png&#34;
 				
 				width=&#34;1321&#34;
 				height=&#34;1073&#34;
@@ -363,10 +363,10 @@
         </item>
         <item>
         <title>*ctf2021 oh-my-socket 复现</title>
-        <link>https://example.com/p/starctf2021-oh-my-socket/</link>
+        <link>https://eifiz.github.io/p/starctf2021-oh-my-socket/</link>
         <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
         
-        <guid>https://example.com/p/starctf2021-oh-my-socket/</guid>
+        <guid>https://eifiz.github.io/p/starctf2021-oh-my-socket/</guid>
         <description>&lt;p&gt;*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。&lt;/p&gt;
 &lt;!-- raw HTML omitted --&gt;
 &lt;h2 id=&#34;审计题目&#34;&gt;审计题目&lt;/h2&gt;
@@ -519,10 +519,10 @@
         </item>
         <item>
         <title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
-        <link>https://example.com/p/xnuca2019-hardjs-writeup/</link>
+        <link>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</link>
         <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
         
-        <guid>https://example.com/p/xnuca2019-hardjs-writeup/</guid>
+        <guid>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</guid>
         <description>&lt;blockquote&gt;
 &lt;p&gt;文章首发于先知社区：https://xz.aliyun.com/t/6113&lt;/p&gt;
 &lt;/blockquote&gt;
@@ -565,7 +565,7 @@
 &lt;p&gt;这里简单介绍一下原型链污染(prototype pollution)&lt;/p&gt;
 &lt;p&gt;Javascript里每个类都有一个&lt;code&gt;prototype&lt;/code&gt;的属性，用来绑定所有对象都会有变量与函数，对象的构造函数又指向类本身，同时对象的&lt;code&gt;__proto__&lt;/code&gt;属性也指向类的&lt;code&gt;prototype&lt;/code&gt;。因此，有以下关系：&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 384; flex-basis: 922px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566801549603.png&#34; data-size=&#34;569x148&#34;&gt;&lt;img src=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566801549603.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566801549603.png&#34; data-size=&#34;569x148&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566801549603.png&#34;
 				
 				width=&#34;569&#34;
 				height=&#34;148&#34;
@@ -577,7 +577,7 @@
 &lt;p&gt;并且，类的继承是通过原型链传递的，一个类的&lt;code&gt;prototype&lt;/code&gt;属性指向其继承的类的一个对象。所以一个类的&lt;code&gt;prototype.__proto__&lt;/code&gt;等于其父类的&lt;code&gt;prototype&lt;/code&gt;，当然也等于该类对象的&lt;code&gt;__proto__.__proto__&lt;/code&gt;属性。&lt;/p&gt;
 &lt;p&gt;我们获取某个对象的某个成员时，如果找不到，就会通过原型链一步步往上找，直到某个父类的原型为&lt;code&gt;null&lt;/code&gt;为止。所以修改对象的某个父类的&lt;code&gt;prototype&lt;/code&gt;的原型就可以通过原型链影响到跟此类有关的所有对象。&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 138; flex-basis: 332px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566803454431.png&#34; data-size=&#34;409x295&#34;&gt;&lt;img src=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566803454431.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566803454431.png&#34; data-size=&#34;409x295&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566803454431.png&#34;
 				
 				width=&#34;409&#34;
 				height=&#34;295&#34;
@@ -772,7 +772,7 @@
 &lt;h2 id=&#34;成功攻击&#34;&gt;成功攻击&lt;/h2&gt;
 &lt;p&gt;可以发现&lt;code&gt;process&lt;/code&gt;是可以访问到的，所以我们可以用来反弹shell&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 1310; flex-basis: 3145px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566806662894.png&#34; data-size=&#34;734x56&#34;&gt;&lt;img src=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566806662894.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566806662894.png&#34; data-size=&#34;734x56&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566806662894.png&#34;
 				
 				width=&#34;734&#34;
 				height=&#34;56&#34;
@@ -793,7 +793,7 @@
     &lt;span class=&#34;s2&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;:&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;test&amp;#34;&lt;/span&gt;
 &lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;figure style=&#34;flex-grow: 287; flex-basis: 690px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566806760189.png&#34; data-size=&#34;1245x433&#34;&gt;&lt;img src=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566806760189.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566806760189.png&#34; data-size=&#34;1245x433&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566806760189.png&#34;
 				
 				width=&#34;1245&#34;
 				height=&#34;433&#34;
@@ -804,7 +804,7 @@
 	&lt;/figure&gt;&lt;/p&gt;
 &lt;p&gt;发送5次请求，然后访问&lt;code&gt;/get&lt;/code&gt;进行原型链污染，最后访问&lt;code&gt;/&lt;/code&gt;或&lt;code&gt;/login&lt;/code&gt;触发&lt;code&gt;render&lt;/code&gt;函数，成功反弹shell并getflag&lt;/p&gt;
 &lt;p&gt;&lt;figure style=&#34;flex-grow: 189; flex-basis: 455px&#34;&gt;
-		&lt;a href=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566636504751.png&#34; data-size=&#34;868x457&#34;&gt;&lt;img src=&#34;https://example.com/p/xnuca2019-hardjs-writeup/1566636504751.png&#34;
+		&lt;a href=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566636504751.png&#34; data-size=&#34;868x457&#34;&gt;&lt;img src=&#34;https://eifiz.github.io/p/xnuca2019-hardjs-writeup/1566636504751.png&#34;
 				
 				width=&#34;868&#34;
 				height=&#34;457&#34;
@@ -830,10 +830,10 @@
         </item>
         <item>
         <title>CSAPP十二章阅读笔记</title>
-        <link>https://example.com/p/csapp-chapter-12/</link>
+        <link>https://eifiz.github.io/p/csapp-chapter-12/</link>
         <pubDate>Sun, 16 Dec 2018 23:32:43 +0000</pubDate>
         
-        <guid>https://example.com/p/csapp-chapter-12/</guid>
+        <guid>https://eifiz.github.io/p/csapp-chapter-12/</guid>
         <description>&lt;p&gt;本文为CSAPP第十二章的阅读笔记，参照的是英文书，专业名词翻译可能不准确，配合原书食用更佳。&lt;/p&gt;
 &lt;!-- raw HTML omitted --&gt;
 &lt;h3 id=&#34;120&#34;&gt;12.0&lt;/h3&gt;
@@ -1017,10 +1017,10 @@
         </item>
         <item>
         <title>红黑树</title>
-        <link>https://example.com/p/red-black-tree/</link>
+        <link>https://eifiz.github.io/p/red-black-tree/</link>
         <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
         
-        <guid>https://example.com/p/red-black-tree/</guid>
+        <guid>https://eifiz.github.io/p/red-black-tree/</guid>
         <description>&lt;p&gt;CLRS红黑树章节阅读心得&lt;/p&gt;
 &lt;h2 id=&#34;什么是红黑树&#34;&gt;什么是红黑树&lt;/h2&gt;
 &lt;p&gt;红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且&lt;strong&gt;结点的左子树的结点key值必定小于等于该结点的key值&lt;/strong&gt;，右子树同理，大于等于。&lt;/p&gt;
@@ -1256,10 +1256,10 @@ c. 分析情况1的时候我们已经证明了性质5不会被破坏，显然性
         </item>
         <item>
         <title>渐进符号笔记</title>
-        <link>https://example.com/p/nation-note/</link>
+        <link>https://eifiz.github.io/p/nation-note/</link>
         <pubDate>Fri, 09 Mar 2018 16:46:27 +0000</pubDate>
         
-        <guid>https://example.com/p/nation-note/</guid>
+        <guid>https://eifiz.github.io/p/nation-note/</guid>
         <description>&lt;p&gt;学习《算法导论》的时候用到的几个渐进符号的定义了解过，但是总是忘记准确定义又要回去翻书，简略做下笔记以便查询&lt;/p&gt;
 &lt;!-- raw HTML omitted --&gt;
 &lt;h2 id=&#34;渐进确界-θtheta&#34;&gt;渐进确界 Θ(theta)&lt;/h2&gt;

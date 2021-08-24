@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>RBTree on Eifiz Blog</title>
-    <link>https://example.com/tags/rbtree/</link>
+    <link>https://eifiz.github.io/tags/rbtree/</link>
     <description>Recent content in RBTree on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 18 Mar 2018 16:40:54 +0000</lastBuildDate><atom:link href="https://example.com/tags/rbtree/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 18 Mar 2018 16:40:54 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/tags/rbtree/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>红黑树</title>
-      <link>https://example.com/p/red-black-tree/</link>
+      <link>https://eifiz.github.io/p/red-black-tree/</link>
       <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
       
-      <guid>https://example.com/p/red-black-tree/</guid>
+      <guid>https://eifiz.github.io/p/red-black-tree/</guid>
       <description>CLRS红黑树章节阅读心得
 什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
 在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。

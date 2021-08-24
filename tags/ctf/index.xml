@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>CTF on Eifiz Blog</title>
-    <link>https://example.com/tags/ctf/</link>
+    <link>https://eifiz.github.io/tags/ctf/</link>
     <description>Recent content in CTF on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 08 Feb 2021 20:25:08 +0000</lastBuildDate><atom:link href="https://example.com/tags/ctf/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 08 Feb 2021 20:25:08 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/tags/ctf/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>*ctf2021 oh-my-socket 复现</title>
-      <link>https://example.com/p/starctf2021-oh-my-socket/</link>
+      <link>https://eifiz.github.io/p/starctf2021-oh-my-socket/</link>
       <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
       
-      <guid>https://example.com/p/starctf2021-oh-my-socket/</guid>
+      <guid>https://eifiz.github.io/p/starctf2021-oh-my-socket/</guid>
       <description>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
 审计题目 主办方公开了题目源码以及相关WP在他们的github上面
 https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket

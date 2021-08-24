@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>CLRS on Eifiz Blog</title>
-    <link>https://example.com/tags/clrs/</link>
+    <link>https://eifiz.github.io/tags/clrs/</link>
     <description>Recent content in CLRS on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 18 Mar 2018 16:40:54 +0000</lastBuildDate><atom:link href="https://example.com/tags/clrs/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 18 Mar 2018 16:40:54 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/tags/clrs/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>红黑树</title>
-      <link>https://example.com/p/red-black-tree/</link>
+      <link>https://eifiz.github.io/p/red-black-tree/</link>
       <pubDate>Sun, 18 Mar 2018 16:40:54 +0000</pubDate>
       
-      <guid>https://example.com/p/red-black-tree/</guid>
+      <guid>https://eifiz.github.io/p/red-black-tree/</guid>
       <description>CLRS红黑树章节阅读心得
 什么是红黑树 红黑树是二叉树搜索(BST)的一个变种，所以简单提一下BST，BST是一颗二叉树，其中的每个结点都有p, left, right和key的属性，前面三个分别是指向父节点，左孩子，右孩子的指针，并且结点的左子树的结点key值必定小于等于该结点的key值，右子树同理，大于等于。
 在最差情况下BST中的结构会呈链表状，这就导致操作花费O(n)的时间，而完全二叉树和平衡二叉树则可以保证在最差情况下的表现也比较好。红黑树就是一颗平衡二叉树(平衡二叉树的每个节点的左子树和右子树的高度最多差为1)。
@@ -29,10 +29,10 @@
     
     <item>
       <title>渐进符号笔记</title>
-      <link>https://example.com/p/nation-note/</link>
+      <link>https://eifiz.github.io/p/nation-note/</link>
       <pubDate>Fri, 09 Mar 2018 16:46:27 +0000</pubDate>
       
-      <guid>https://example.com/p/nation-note/</guid>
+      <guid>https://eifiz.github.io/p/nation-note/</guid>
       <description>学习《算法导论》的时候用到的几个渐进符号的定义了解过，但是总是忘记准确定义又要回去翻书，简略做下笔记以便查询
 渐进确界 Θ(theta) f(n) = Θ(g(n)) 表示存在正常数$c_1$， $c_2$，与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ $c_1$g(n) ≤ f(n) ≤ $c_2$g(n) 由定义可知，这里的等号并不是对称的而是包含关系，实际上我们可以说f(n) ∈ Θ(g(n))，同时要求f(n)是渐进非负的，也就是说f(n)在n达到一定规模的大小后保持非负数。
 渐进上界 O(big-oh) f(n) = O(g(n)) 表示存在正常数c与$n_0$使得，对于任意n &amp;gt; $n_0$， 0 ≤ f(n) ≤ cg(n)

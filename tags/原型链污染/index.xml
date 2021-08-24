@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>原型链污染 on Eifiz Blog</title>
-    <link>https://example.com/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/</link>
+    <link>https://eifiz.github.io/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/</link>
     <description>Recent content in 原型链污染 on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 30 Aug 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 30 Aug 2019 00:00:00 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/tags/%E5%8E%9F%E5%9E%8B%E9%93%BE%E6%B1%A1%E6%9F%93/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
-      <link>https://example.com/p/xnuca2019-hardjs-writeup/</link>
+      <link>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</link>
       <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://example.com/p/xnuca2019-hardjs-writeup/</guid>
+      <guid>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</guid>
       <description>文章首发于先知社区：https://xz.aliyun.com/t/6113
  前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
 初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。

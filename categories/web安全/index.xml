@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Web安全 on Eifiz Blog</title>
-    <link>https://example.com/categories/web%E5%AE%89%E5%85%A8/</link>
+    <link>https://eifiz.github.io/categories/web%E5%AE%89%E5%85%A8/</link>
     <description>Recent content in Web安全 on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/categories/web%E5%AE%89%E5%85%A8/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/categories/web%E5%AE%89%E5%85%A8/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>探索DOM XSS一个trick的原理</title>
-      <link>https://example.com/p/a-trick-in-dom-xss/</link>
+      <link>https://eifiz.github.io/p/a-trick-in-dom-xss/</link>
       <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://example.com/p/a-trick-in-dom-xss/</guid>
+      <guid>https://eifiz.github.io/p/a-trick-in-dom-xss/</guid>
       <description>文章首发于安全客： https://www.anquanke.com/post/id/250538
  前段时间P牛在他的星球发了一个XSS的小挑战（关于挑战的更多细节和解法见P牛的博客或者星球），我用的是DOM clobbering的方式完成。事后P牛给出了另一个trick，我看不懂但大受震撼，所以本文就来探讨一下这个trick的原理。
 以下测试的步骤都是Win10 &amp;amp; Chrome 最新版(92.0.4515.131) 下进行的；作者水平有限，如有错漏，还请各位师傅指正。
@@ -26,10 +26,10 @@
     
     <item>
       <title>*ctf2021 oh-my-socket 复现</title>
-      <link>https://example.com/p/starctf2021-oh-my-socket/</link>
+      <link>https://eifiz.github.io/p/starctf2021-oh-my-socket/</link>
       <pubDate>Mon, 08 Feb 2021 20:25:08 +0000</pubDate>
       
-      <guid>https://example.com/p/starctf2021-oh-my-socket/</guid>
+      <guid>https://eifiz.github.io/p/starctf2021-oh-my-socket/</guid>
       <description>*CTF2021里的一道Web题目oh-my-socket是关于TCP侧信道攻击的，个人感觉更像是杂项而不是传统的Web题，记录一下赛后复现的过程以及遇到的一些问题和解决思路。
 审计题目 主办方公开了题目源码以及相关WP在他们的github上面
 https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
@@ -48,10 +48,10 @@ https://github.com/sixstars/starctf2021/tree/main/web-oh-my-socket
     
     <item>
       <title>XNUCA2019 Hardjs题解 从原型链污染到RCE</title>
-      <link>https://example.com/p/xnuca2019-hardjs-writeup/</link>
+      <link>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</link>
       <pubDate>Fri, 30 Aug 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://example.com/p/xnuca2019-hardjs-writeup/</guid>
+      <guid>https://eifiz.github.io/p/xnuca2019-hardjs-writeup/</guid>
       <description>文章首发于先知社区：https://xz.aliyun.com/t/6113
  前言 这次XNUCA2019的WEB题四道只有两道被解出，其中这道Hardjs是做出人数较少的一道，还是比较有意思的，所以在此分享一下解题思路。
 初步分析 题目直接给了源码，所以可以进行一下审计。打开源码目录，最显眼的就是server.js和robot.js。

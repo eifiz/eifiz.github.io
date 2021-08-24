@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>XSS on Eifiz Blog</title>
-    <link>https://example.com/tags/xss/</link>
+    <link>https://eifiz.github.io/tags/xss/</link>
     <description>Recent content in XSS on Eifiz Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://example.com/tags/xss/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 23 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://eifiz.github.io/tags/xss/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>探索DOM XSS一个trick的原理</title>
-      <link>https://example.com/p/a-trick-in-dom-xss/</link>
+      <link>https://eifiz.github.io/p/a-trick-in-dom-xss/</link>
       <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
       
-      <guid>https://example.com/p/a-trick-in-dom-xss/</guid>
+      <guid>https://eifiz.github.io/p/a-trick-in-dom-xss/</guid>
       <description>文章首发于安全客： https://www.anquanke.com/post/id/250538
  前段时间P牛在他的星球发了一个XSS的小挑战（关于挑战的更多细节和解法见P牛的博客或者星球），我用的是DOM clobbering的方式完成。事后P牛给出了另一个trick，我看不懂但大受震撼，所以本文就来探讨一下这个trick的原理。
 以下测试的步骤都是Win10 &amp;amp; Chrome 最新版(92.0.4515.131) 下进行的；作者水平有限，如有错漏，还请各位师傅指正。
